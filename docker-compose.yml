@@ -1,0 +1,24 @@
+version: '0.1'
+name: puppet-summary
+
+services:
+  mongodb:
+    image: mongo:7.0.1-jammy
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=application
+      - MONGO_INITDB_ROOT_PASSWORD=password
+  mysql:
+    image: mysql:8.0.33
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Password01
+      MYSQL_DATABASE: puppet-summary
+      MYSQL_USER: puppet
+      MYSQL_PASSWORD: Password01
+    ports:
+      - "3306:3306"

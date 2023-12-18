@@ -19,3 +19,11 @@
 
 # Go workspace file
 go.work
+
+# Intellij Idea
+.idea/
+
+# Any database files left from SQLite
+*.db
+*.db-shm
+*.db-wal
