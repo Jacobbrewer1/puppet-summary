@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{.Fqdn}}</title>
+    <meta charset="utf-8">
+    <link href="{{.URLPrefix }}/assets/favicon.ico" rel="shortcut icon"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{.URLPrefix }}/assets/css/bootstrap.min.css" rel="stylesheet">
+    <script src="{{.URLPrefix }}/assets/js/jquery-1.12.4.min.js"></script>
+    <script src="{{.URLPrefix }}/assets/js/bootstrap.min.js"></script>
+    <script src="{{.URLPrefix }}/assets/js/Chart.bundle.min.js"></script>
+    <script src="{{.URLPrefix }}/assets/js/jquery.tablesorter.min.js"></script>
+    <script type="text/javascript">
+
+        window.onload = function () {
+            var points = [
+                {{range .Nodes }}
+{{/*                    Convert the time to seconds and remove the identifying "s"*/}}
+                {{graphConvert .Runtime}},
+                {{end}}
+            ];
+            var labels = [];
+            for (var i = 0; i < points.length; i++) {
+                labels.push(i + 1);
+            }
+            var config = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "seconds",
+                        data: points,
+                        fill: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: 'Puppet Runtime'
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+                    scales: {
+                        xAxes: [{
+                            display: false,
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Value'
+                            }
+                        }]
+                    }
+                }
+            }
+
+            var ctx = document.getElementById("canvas").getContext("2d");
+            window.myLine = new Chart(ctx, config);
+
+        }
+    </script>
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <div class="pull-left">
+                <ul class="nav navbar-nav">
+                    <li class="breadcrumb-item"><a href="{{.URLPrefix }}/"><b>Puppet-Summary</b></a></li>
+                </ul>
+            </div>
+            <div class="pull-right">
+                <form class="navbar-form" action="{{.URLPrefix }}/search" method="POST" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="term">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" type="submit"><i class="glyphicon glyphicon-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <h1>{{.Fqdn}}</h1>
+    <canvas id="canvas" style="height: 200px; width: 90%; margin-left:5%; margin-right:5%"></canvas>
+    <p>&nbsp;</p>
+    <table class="table table-bordered table-striped table-condensed table-hover">
+        <tr>
+            <th>ID</th>
+            <th>Node</th>
+            <th>Environment</th>
+            <th>Status</th>
+            <th>Seen</th>
+            <th>Failed</th>
+            <th>Changed</th>
+            <th>Total</th>
+        </tr>
+        {{range $i, $e := .Nodes}}
+            <tr
+                    {{if eq .State "FAILED" }} class="danger" {{ end }}
+                    {{if eq .State "CHANGED" }} class="info"  {{ end }}
+                    {{if ne .YamlFile "PRUNED" }} data-href="{{$.URLPrefix }}/reports/{{.ID}}" {{ end }}>
+                <td id="data_{{inc $i}}">{{inc $i}}</td>
+                <td>{{.Fqdn}}</td>
+                <td>{{.Env}}</td>
+                <td>{{.State}}</td>
+                <td title="{{.ExecTime}}">{{.TimeSince}}</td>
+                <td>{{.Failed}}</td>
+                <td>{{.Changed}}</td>
+                <td>{{.Total}}</td>
+            </tr>
+        {{end}}
+    </table>
+</div>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<hr/>
+<footer id="footer">
+    <div class="container">
+        <div class="col-md-4">
+            <ul class="nav">
+                <li><a href="{{.URLPrefix }}/radiator/">Radiator View</a></li>
+            </ul>
+        </div>
+        <div class="col-md-4">
+            <ul class="nav">
+                <li><a href="https://github.com/Jacobbrewer1/puppet-summary">GitHub Project</a></li>
+            </ul>
+        </div>
+        <div class="col-md-4">
+            <ul class="nav">
+                <li><a href="https://bthree.uk/">Bthree</a></li>
+            </ul>
+        </div>
+    </div>
+</footer>
+<script type="text/javascript">
+    $(function () {
+        $('.table tr[data-href]').each(function () {
+            $(this).css('cursor', 'pointer').hover(
+                function () {
+                    $(this).addClass('active');
+                },
+                function () {
+                    $(this).removeClass('active');
+                }).on('mouseup', function (e) {
+                switch (e.which) {
+                    // Left Click.
+                    case 1:
+                        document.location = $(this).attr('data-href');
+                        break;
+
+                    // Middle click.
+                    case 2:
+                        var newWindow = $(this).attr('data-href');
+                        window.open(newWindow, '_blank');
+                        e.preventDefault();
+                        break;
+                }
+            })
+        });
+
+        //
+        // Add click-handler for graph-points.
+        //
+        //
+        // This is a little hacky.
+        //
+        document.getElementById("canvas").onclick = function (evt) {
+
+            //
+            // Get the event that invoked us.
+            //
+            var activePoints = window.myLine.getElementsAtEvent(evt);
+            if (activePoints && Array.isArray(activePoints)) {
+
+                //
+                // Find the point we've got.
+                //
+                var firstPoint = activePoints[0];
+                if (firstPoint) {
+
+                    // If we got a point then find the label.
+                    var label = window.myLine.data.labels[firstPoint._index];
+                    if (label) {
+
+                        //
+                        // Our label is something like "8" which means we
+                        // need to jump to the table row with ID "data_8".
+                        //
+                        tmp = "#data_" + label;
+
+                        //
+                        // Scroll there.
+                        //
+                        $('html, body').animate({
+                            scrollTop: $(tmp).offset().top
+                        }, 500);
+                    }
+                }
+            }
+        };
+
+    });
+</script>
+</body>
+</html>
