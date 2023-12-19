@@ -57,6 +57,30 @@ func reportIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get the Yaml report from GCS.
+	file, err := dataaccess.GCS.DownloadFile(r.Context(), rep.ReportFilePath())
+	if err != nil {
+		slog.Error("Error downloading yaml file", slog.String(logging.KeyError, err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Error downloading yaml file")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	}
+
+	// Parse the yaml file.
+	report, err := parsePuppetReport(file)
+	if err != nil {
+		slog.Error("Error parsing yaml file", slog.String(logging.KeyError, err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Error parsing yaml file")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	}
+
+	rep = report
+
 	type PageData struct {
 		Report    *entities.PuppetReport
 		URLPrefix string
