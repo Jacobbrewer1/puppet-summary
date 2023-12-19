@@ -47,12 +47,26 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Filter the nodes by environment.
-	filteredNodes := make([]*entities.PuppetRun, 0, len(nodes))
+	filteredNodesMap := make(map[string]*entities.PuppetRun)
 	for _, node := range nodes {
+		// Check that the node is in the environment.
 		if env == entities.EnvAll || node.Env.IsIn(env) {
 			node.CalculateTimeSince()
-			filteredNodes = append(filteredNodes, node)
+			// Now check if the node is already in the map.
+			if _, ok := filteredNodesMap[node.Fqdn]; !ok {
+				filteredNodesMap[node.Fqdn] = node
+			} else {
+				// The node is already in the map, so we need to check if the node has a newer timestamp.
+				if node.ExecTime.Time().After(filteredNodesMap[node.Fqdn].ExecTime.Time()) {
+					filteredNodesMap[node.Fqdn] = node
+				}
+			}
 		}
+	}
+
+	filteredNodes := make([]*entities.PuppetRun, 0, len(nodes))
+	for _, node := range filteredNodesMap {
+		filteredNodes = append(filteredNodes, node)
 	}
 
 	history, err := dataaccess.DB.GetHistory(r.Context(), env)
@@ -141,7 +155,9 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse the template.
-	tmpl := template.Must(template.New("").Parse(string(pt)))
+	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
+		"prettyDuration": prettyDuration,
+	}).Parse(string(pt)))
 
 	// Execute the template.
 	w.Header().Set("content-type", "text/html")
@@ -155,4 +171,24 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+}
+
+func prettyDuration(d *entities.Duration) string {
+	if d == nil {
+		return ""
+	}
+
+	// Get the duration as a string.
+	str := d.String()
+
+	// Add a space between each unit.
+	str = strings.ReplaceAll(str, "d", "d ")
+	str = strings.ReplaceAll(str, "h", "h ")
+	str = strings.ReplaceAll(str, "m", "m ")
+	str = strings.ReplaceAll(str, "s", "s ")
+
+	// Remove the last space.
+	str = strings.TrimSuffix(str, " ")
+
+	return str
 }
