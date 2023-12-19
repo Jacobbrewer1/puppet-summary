@@ -80,7 +80,7 @@ jobs:
           path: ./charts
           token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Deploy matchmaker
+      - name: Deploy Puppet Summary
         uses: WyriHaximus/github-action-helm3@v3
         with:
           exec: helm upgrade --install puppet-summary ./charts/charts/puppet-summary --set image.tag=${{ steps.vars_deploy.outputs.sha_short_deploy }}
