@@ -23,13 +23,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	var env entities.Environment
 	if !ok {
 		env = entities.EnvAll
-	} else if envStr == "" {
-		// Respond with 400 bad request.
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("No environment provided")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
 	} else {
 		envStr = strings.ToUpper(envStr)
 		env = entities.Environment(envStr)
@@ -44,28 +37,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	nodes, err := dataaccess.DB.GetRuns(r.Context())
-	if err != nil {
-		if errors.Is(err, dataaccess.ErrNotFound) {
-			// Respond with 404 not found.
-			w.WriteHeader(http.StatusNotFound)
-			if err := json.NewEncoder(w).Encode(request.NewMessage("No nodes found")); err != nil {
-				slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-			}
-			return
-		}
-
+	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting nodes")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	}
-
-	if len(nodes) == 0 {
-		// Respond with 404 not found.
-		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("No nodes found")); err != nil {
 			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
