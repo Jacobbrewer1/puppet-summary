@@ -48,7 +48,7 @@
             <div class="col-sm-1 col-md-1">
             </div>
             <div class="col-sm-11 col-md-11">
-                <p>Report of execution against {{ .Report.Fqdn }} in {{ .Report.Env }}, at {{ .Report.ExecTime }}:</p>
+                <p>Report of execution against {{ .Report.Fqdn }} in {{ .Report.Env }}, at {{ prettyTime .Report.ExecTime }}:</p>
                 <table class="table table-bordered table-striped table-condensed table-hover">
                     <tr>
                         <td>Changed</td>

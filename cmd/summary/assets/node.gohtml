@@ -124,7 +124,7 @@
                 <td>{{.Fqdn}}</td>
                 <td>{{.Env}}</td>
                 <td>{{.State}}</td>
-                <td title="{{.ExecTime}}">{{.TimeSince}}</td>
+                <td title="{{.ExecTime}}">{{prettyDuration .TimeSince}}</td>
                 <td>{{.Failed}}</td>
                 <td>{{.Changed}}</td>
                 <td>{{.Total}}</td>

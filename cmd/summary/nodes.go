@@ -101,7 +101,8 @@ func nodeFqdnHandler(w http.ResponseWriter, r *http.Request) {
 		"inc": func(i int) string {
 			return strconv.Itoa(i + 1)
 		},
-		"graphConvert": graphRuntime,
+		"graphConvert":   graphRuntime,
+		"prettyDuration": prettyDuration,
 	}).Parse(string(pt)))
 
 	// Execute the template.

@@ -99,7 +99,7 @@ func (m *mongodbImpl) GetHistory(ctx context.Context, environment entities.Envir
 
 	envFilter := bson.M{}
 	if environment != entities.EnvAll {
-		envFilter = bson.M{"environment": environment}
+		envFilter = bson.M{"env": environment}
 	}
 
 	cursor, err := collection.Distinct(ctx, "exec_time", envFilter)
