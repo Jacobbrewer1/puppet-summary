@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
@@ -127,6 +128,7 @@ func reportIDHandler(w http.ResponseWriter, r *http.Request) {
 			s = fmt.Sprintf("%.2f", f)
 			return s
 		},
+		"prettyTime": prettyTime,
 	}).Parse(string(pt)))
 
 	// Execute the template.
@@ -141,4 +143,8 @@ func reportIDHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+}
+
+func prettyTime(t entities.Datetime) string {
+	return t.Time().Format(time.DateTime)
 }

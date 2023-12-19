@@ -20,10 +20,8 @@ import (
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	// See if the environment has been provided in the URL.
 	envStr, ok := mux.Vars(r)["env"]
-	var env entities.Environment
-	if !ok {
-		env = entities.EnvAll
-	} else {
+	env := entities.EnvAll
+	if ok {
 		envStr = strings.ToUpper(envStr)
 		env = entities.Environment(envStr)
 		if !env.Valid() {
