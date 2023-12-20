@@ -4,18 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
+	"github.com/gorilla/mux"
 	"html/template"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
-
-	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
-	"github.com/gorilla/mux"
 )
 
 func nodeFqdnHandler(w http.ResponseWriter, r *http.Request) {

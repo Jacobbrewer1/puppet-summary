@@ -139,12 +139,12 @@ func (m *mongodbImpl) GetHistory(ctx context.Context, environment entities.Envir
 	// Sort the dates in reverse order.
 	sort.Slice(dates, func(i, j int) bool {
 		// Parse the dates.
-		iDate, err := time.Parse(time.RFC3339, dates[i])
+		iDate, err := time.Parse(time.DateOnly, dates[i])
 		if err != nil {
 			slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
 			return false
 		}
-		jDate, err := time.Parse(time.RFC3339, dates[j])
+		jDate, err := time.Parse(time.DateOnly, dates[j])
 		if err != nil {
 			slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
 			return false
