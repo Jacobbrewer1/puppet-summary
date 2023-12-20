@@ -177,9 +177,9 @@
                 </thead>
                 {{range .Nodes }}
                     <tr
-                            {{if eq .State "failed" }} class="danger" {{ end }}
-                            {{if eq .State "changed" }} class="info"  {{ end }}
-                            {{if eq .State "orphaned" }} class="warning"  {{ end }}
+                            {{if eq .State "FAILED" }} class="danger" {{ end }}
+                            {{if eq .State "CHANGED" }} class="info"  {{ end }}
+                            {{if eq .State "ORPHANED" }} class="warning"  {{ end }}
                             data-href="{{$.URLPrefix }}/nodes/{{.Fqdn}}">
                         <td>{{.Fqdn}}</td>
                         <td>{{.Env}}</td>
