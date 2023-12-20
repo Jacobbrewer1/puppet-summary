@@ -3,12 +3,15 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
@@ -50,13 +53,17 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		// Check that the node is in the environment.
 		if env == entities.EnvAll || node.Env.IsIn(env) {
 			node.CalculateTimeSince()
+
+			// Create a key for the node. This should be the FQDN and the environment.
+			key := fmt.Sprintf("%s-%s", node.Fqdn, node.Env)
+
 			// Now check if the node is already in the map.
 			if _, ok := filteredNodesMap[node.Fqdn]; !ok {
-				filteredNodesMap[node.Fqdn] = node
+				filteredNodesMap[key] = node
 			} else {
 				// The node is already in the map, so we need to check if the node has a newer timestamp.
-				if node.ExecTime.Time().After(filteredNodesMap[node.Fqdn].ExecTime.Time()) {
-					filteredNodesMap[node.Fqdn] = node
+				if node.ExecTime.Time().After(filteredNodesMap[key].ExecTime.Time()) {
+					filteredNodesMap[key] = node
 				}
 			}
 		}
@@ -68,16 +75,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	history, err := dataaccess.DB.GetHistory(r.Context(), env)
-	if err != nil {
-		if errors.Is(err, dataaccess.ErrNotFound) {
-			// Respond with 404 not found.
-			w.WriteHeader(http.StatusNotFound)
-			if err := json.NewEncoder(w).Encode(request.NewMessage("No history found")); err != nil {
-				slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-			}
-			return
-		}
-
+	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
 		slog.Error("Error getting history", slog.String(logging.KeyError, err.Error()))
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
@@ -85,6 +83,27 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
+	}
+
+	// If the history is not empty, then sort them by timestamp.
+	if len(history) > 0 {
+		sort.Slice(history, func(i, j int) bool {
+			// Parse the timestamps.
+			iTime, err := time.Parse(time.DateOnly, history[i].Date)
+			if err != nil {
+				slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
+				return false
+			}
+
+			jTime, err := time.Parse(time.DateOnly, history[j].Date)
+			if err != nil {
+				slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
+				return false
+			}
+
+			// Compare the timestamps.
+			return iTime.Before(jTime)
+		})
 	}
 
 	envs, err := dataaccess.DB.GetEnvironments(r.Context())
