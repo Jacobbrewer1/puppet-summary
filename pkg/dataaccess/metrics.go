@@ -13,3 +13,12 @@ var DatabaseLatency = promauto.NewHistogramVec(
 	},
 	[]string{"query"},
 )
+
+// GCSLatency is the duration of GCS queries.
+var GCSLatency = promauto.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name: "gcs_latency",
+		Help: "Duration of GCS queries",
+	},
+	[]string{"query"},
+)

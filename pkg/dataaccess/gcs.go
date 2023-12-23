@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"cloud.google.com/go/storage"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/api/option"
 )
 
@@ -51,6 +52,10 @@ func (s *storageImpl) SaveFile(ctx context.Context, filePath string, file []byte
 		return nil
 	}
 
+	// Start the prometheus timer.
+	t := prometheus.NewTimer(GCSLatency.With(prometheus.Labels{"query": "save_file"}))
+	defer t.ObserveDuration()
+
 	// Connect to the bucket.
 	bkt := s.gcs.Bucket(s.bucket)
 
@@ -77,6 +82,10 @@ func (s *storageImpl) DownloadFile(ctx context.Context, filePath string) ([]byte
 		// GCS is not enabled, so do nothing.
 		return nil, nil
 	}
+
+	// Start the prometheus timer.
+	t := prometheus.NewTimer(GCSLatency.With(prometheus.Labels{"query": "download_file"}))
+	defer t.ObserveDuration()
 
 	// Connect to the bucket.
 	bkt := s.gcs.Bucket(s.bucket)
@@ -107,6 +116,10 @@ func (s *storageImpl) DeleteFile(ctx context.Context, filePath string) error {
 		// GCS is not enabled, so do nothing.
 		return nil
 	}
+
+	// Start the prometheus timer.
+	t := prometheus.NewTimer(GCSLatency.With(prometheus.Labels{"query": "delete_file"}))
+	defer t.ObserveDuration()
 
 	// Connect to the bucket.
 	bkt := s.gcs.Bucket(s.bucket)
