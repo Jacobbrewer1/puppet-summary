@@ -20,6 +20,7 @@
             //
             changed = $('#changed_table tr').length - 1;
             failed = $('#failed_table tr').length - 1;
+            unchanged = $('#unchanged_table tr').length - 1;
 
             //
             // Update the tab-headers to include counts.
@@ -29,6 +30,9 @@
             }
             if (failed > 0) {
                 $('#failed_count').html(failed)
+            }
+            if (unchanged > 0) {
+                $('#unchanged_count').html(unchanged)
             }
 
             var barChartData = {
@@ -153,7 +157,7 @@
         <li class="active"><a data-toggle="tab" href="#all">All</a></li>
         <li><a data-toggle="tab" href="#failed">Failed <span class="badge" id="failed_count"></span></a></li>
         <li><a data-toggle="tab" href="#changed">Changed <span class="badge" id="changed_count"></span></a></li>
-        <li><a data-toggle="tab" href="#unchanged">Unchanged</a></li>
+        <li><a data-toggle="tab" href="#unchanged">Unchanged <span class="badge" id="unchanged_count"></span></a></li>
     </ul>
 
 
