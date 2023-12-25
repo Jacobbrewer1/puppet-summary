@@ -67,7 +67,6 @@
                         <tr
                                 {{if eq .State "failed" }} class="danger" {{ end }}
                                 {{if eq .State "changed" }} class="info"  {{ end }}
-                                {{if eq .State "orphaned" }} class="warning"  {{ end }}
                                 data-href="{{$.URLPrefix}}/node/{{.Fqdn}}">
                             <td>{{.Fqdn}}</td>
                             <td>{{.State}}</td>

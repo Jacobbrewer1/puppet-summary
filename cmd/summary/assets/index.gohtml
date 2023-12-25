@@ -20,7 +20,7 @@
             //
             changed = $('#changed_table tr').length - 1;
             failed = $('#failed_table tr').length - 1;
-            orphaned = $('#orphaned_table tr').length - 1;
+            unchanged = $('#unchanged_table tr').length - 1;
 
             //
             // Update the tab-headers to include counts.
@@ -31,8 +31,8 @@
             if (failed > 0) {
                 $('#failed_count').html(failed)
             }
-            if (orphaned > 0) {
-                $('#orphaned_count').html(orphaned)
+            if (unchanged > 0) {
+                $('#unchanged_count').html(unchanged)
             }
 
             var barChartData = {
@@ -97,7 +97,6 @@
             $('#failed_table').tablesorter();
             $('#changed_table').tablesorter();
             $('#unchanged_table').tablesorter();
-            $('#orphaned_table').tablesorter();
 
         };
 
@@ -158,8 +157,7 @@
         <li class="active"><a data-toggle="tab" href="#all">All</a></li>
         <li><a data-toggle="tab" href="#failed">Failed <span class="badge" id="failed_count"></span></a></li>
         <li><a data-toggle="tab" href="#changed">Changed <span class="badge" id="changed_count"></span></a></li>
-        <li><a data-toggle="tab" href="#unchanged">Unchanged</a></li>
-        <li><a data-toggle="tab" href="#orphaned">Orphaned <span class="badge" id="orphaned_count"></span></a></li>
+        <li><a data-toggle="tab" href="#unchanged">Unchanged <span class="badge" id="unchanged_count"></span></a></li>
     </ul>
 
 
@@ -179,7 +177,6 @@
                     <tr
                             {{if eq .State "FAILED" }} class="danger" {{ end }}
                             {{if eq .State "CHANGED" }} class="info"  {{ end }}
-                            {{if eq .State "ORPHANED" }} class="warning"  {{ end }}
                             data-href="{{$.URLPrefix }}/nodes/{{.Fqdn}}">
                         <td>{{.Fqdn}}</td>
                         <td>{{.Env}}</td>
@@ -261,34 +258,6 @@
                 {{end}}
             </table>
         </div>
-
-        <!-- Orphaned -->
-        <div id="orphaned" class="tab-pane fade">
-            <table id="orphaned_table" class="table table-bordered table-striped table-condensed table-hover">
-                <thead>
-                <tr>
-                    <th>Node</th>
-                    <th>Environment</th>
-                    <th>State</th>
-                    <th>Seen</th>
-                </tr>
-                </thead>
-                {{range .Nodes }}
-                    {{if eq .State "ORPHANED" }}
-                        <tr class="warning" data-href="{{$.URLPrefix }}/nodes/{{.Fqdn}}">
-                            <td>{{.Fqdn}}</td>
-                            <td>{{.Env}}</td>
-                            <td>{{.State}}</td>
-                            <td data-text="{{.Epoch}}" data-sort-value="{{.Epoch}}" title="{{.ExecTime}}">{{prettyDuration .TimeSince}}</td>
-                        </tr>
-                    {{end}}
-                {{end}}
-            </table>
-            <p>&nbsp;</p>
-            <p>Orphaned nodes are those which have not submitted a report to the puppet-master "recently", they will
-                gradually fall off the display as reports are pruned.</p>
-        </div>
-
     </div>
 </div>
 <p>&nbsp;</p>
