@@ -7,7 +7,6 @@ const (
 	StateUnchanged State = "UNCHANGED"
 	StateFailed    State = "FAILED"
 	StateSkipped   State = "SKIPPED"
-	StateOrphaned  State = "ORPHANED"
 )
 
 var States = []State{
@@ -15,7 +14,6 @@ var States = []State{
 	StateUnchanged,
 	StateFailed,
 	StateSkipped,
-	StateOrphaned,
 }
 
 func (s State) String() string {
