@@ -80,6 +80,9 @@ func reportIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Sort the report resources.
+	report.SortResources()
+
 	rep = report
 
 	type PageData struct {
