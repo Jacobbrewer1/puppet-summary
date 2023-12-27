@@ -3,6 +3,7 @@ package entities
 import (
 	"log/slog"
 	"path/filepath"
+	"sort"
 	"time"
 )
 
@@ -116,4 +117,39 @@ func (n *PuppetReport) ReportFilePath() string {
 	path := filepath.Join("reports", n.Env.String(), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".yaml")
 	n.YamlFile = path
 	return path
+}
+
+func (n *PuppetReport) SortResources() {
+	// Sort the resources.
+	n.sortResource(n.ResourcesFailed)
+	n.sortResource(n.ResourcesChanged)
+	n.sortResource(n.ResourcesSkipped)
+	n.sortResource(n.ResourcesOK)
+}
+
+func (n *PuppetReport) sortResource(resources []*PuppetResource) {
+	sort.Slice(resources, func(i, j int) bool {
+		// Sort by resource file.
+		if resources[i].File != resources[j].File {
+			return resources[i].File < resources[j].File
+		}
+
+		// Sort by resource line.
+		if resources[i].Line != resources[j].Line {
+			return resources[i].Line < resources[j].Line
+		}
+
+		// Sort by resource type.
+		if resources[i].Type != resources[j].Type {
+			return resources[i].Type < resources[j].Type
+		}
+
+		// Sort by resource name.
+		if resources[i].Name != resources[j].Name {
+			return resources[i].Name < resources[j].Name
+		}
+
+		// Resources are equal.
+		return false
+	})
 }
