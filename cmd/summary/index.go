@@ -74,6 +74,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		filteredNodes = append(filteredNodes, node)
 	}
 
+	// Sort the nodes by the time since the last puppet-run. This will put the nodes with the newest puppet-runs at
+	// the top.
+	sort.Slice(filteredNodes, func(i, j int) bool {
+		return filteredNodes[i].TimeSince.Time() < filteredNodes[j].TimeSince.Time()
+	})
+
 	history, err := dataaccess.DB.GetHistory(r.Context(), env)
 	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
 		slog.Error("Error getting history", slog.String(logging.KeyError, err.Error()))
