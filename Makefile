@@ -6,7 +6,6 @@ PR-approval:
 	go vet ./...
 	go test ./...
 ci: clean
-	@echo "Building CI Scraper"
 	# For each subdirectory of the cmd directory, run make ci
 	for d in cmd/*; do \
 		(cd $$d && make ci); \
