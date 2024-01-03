@@ -41,7 +41,13 @@ func (a *app) init() error {
 	a.r.HandleFunc(pathIndex, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
 	a.r.HandleFunc(pathIndexEnv, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
 
-	a.r.HandleFunc(pathUpload, middlewareHttp(uploadHandler, AuthOptionNone)).Methods(http.MethodPost)
+	uploadAuth := AuthOptionNone
+	if *secureUpload {
+		slog.Info("Secure upload enabled for upload endpoint")
+		uploadAuth = AuthOptionInternal
+	}
+	a.r.HandleFunc(pathUpload, middlewareHttp(uploadHandler, uploadAuth)).Methods(http.MethodPost)
+
 	a.r.HandleFunc(pathApiState, middlewareHttp(stateHandler, AuthOptionNone)).Methods(http.MethodGet)
 	a.r.HandleFunc(pathRadiator, middlewareHttp(radiatorHandler, AuthOptionNone)).Methods(http.MethodGet)
 	a.r.HandleFunc(pathSearch, middlewareHttp(searchHandler, AuthOptionNone)).Methods(http.MethodPost)
