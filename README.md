@@ -20,6 +20,9 @@ Usage of ./puppet-summary:
         Database to use (default "sqlite"). Valid options are: sqlite, mysql, mongo.
   -gcs
         Enable Google Cloud Storage upload.
+  -secure-upload
+        Enable secure upload. This will prevent any requests to the /upload endpoint that have come from outside the
+        cluster. (This is considered if the request has the `X-Forwarded-For` header set.)
   -version
         Print version and exit.
 ```
@@ -73,3 +76,14 @@ the `GCS_CREDENTIALS` environment variable with the contents of the JSON credent
 ```text
 GCS_BUCKET="puppet-reports"
 ```
+
+#### Secure Upload
+
+```shell
+./puppet-summary -secure-upload
+```
+
+This will enable the `/upload` endpoint to only accept requests from within the cluster. This is done by checking the
+`X-Forwarded-For` header to see if the request has come from within the cluster. This is useful if you are using
+something like Ambassador to expose the `/upload` endpoint to the internet. You would then use a proxy such as NGINX
+with authentication to allow access to the `/upload` endpoint.

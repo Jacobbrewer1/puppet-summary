@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
@@ -10,6 +11,8 @@ const (
 	// appName is the name of the application.
 	appName = "summary"
 )
+
+var secureUpload = flag.Bool("secure-upload", false, "Does not allow requests that have come from outside the cluster")
 
 func generateConfig() error {
 	err := dataaccess.ConnectDatabase()
