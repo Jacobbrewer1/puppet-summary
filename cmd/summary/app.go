@@ -43,6 +43,7 @@ func (a *app) init() error {
 
 	uploadAuth := AuthOptionNone
 	if *secureUpload {
+		slog.Info("Secure upload enabled for upload endpoint")
 		uploadAuth = AuthOptionInternal
 	}
 	a.r.HandleFunc(pathUpload, middlewareHttp(uploadHandler, uploadAuth)).Methods(http.MethodPost)
