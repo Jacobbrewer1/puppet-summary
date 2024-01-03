@@ -4,11 +4,11 @@ import "net/http"
 
 // IsInternal returns true if the request is internal.
 func IsInternal(r *http.Request) bool {
-	return isKubernetesRequest(r)
+	return IsProxied(r)
 }
 
-// isKubernetesRequest returns true if the request is from kubernetes.
-func isKubernetesRequest(r *http.Request) bool {
+// IsProxied returns true if the request is from kubernetes.
+func IsProxied(r *http.Request) bool {
 	// Kubernetes sets the X-Forwarded-For header when coming from the ingress, therefore we can check if the header is
 	// set to determine if the request is from kubernetes.
 	//
@@ -19,8 +19,4 @@ func isKubernetesRequest(r *http.Request) bool {
 	h := r.Header.Get("X-Forwarded-For")
 	// If the header is not set, then the request is internal.
 	return h == ""
-}
-
-func IsProxied(r *http.Request) bool {
-	return r.Header.Get("X-Forwarded-Host") != ""
 }
