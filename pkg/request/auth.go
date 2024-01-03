@@ -20,3 +20,7 @@ func isKubernetesRequest(r *http.Request) bool {
 	// If the header is not set, then the request is internal.
 	return h == ""
 }
+
+func IsProxied(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-Host") != ""
+}

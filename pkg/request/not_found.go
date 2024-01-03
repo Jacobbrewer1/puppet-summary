@@ -31,3 +31,15 @@ func MethodNotAllowedHandler() http.HandlerFunc {
 		}
 	}
 }
+
+// UnauthorizedHandler returns a handler that returns a 401 response.
+func UnauthorizedHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		msg := NewMessage("Unauthorized")
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		if err := json.NewEncoder(w).Encode(msg); err != nil {
+			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+	}
+}
