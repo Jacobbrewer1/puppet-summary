@@ -21,8 +21,8 @@ Usage of ./puppet-summary:
   -gcs
         Enable Google Cloud Storage upload.
   -secure-upload
-        Enable secure upload. This will prevent any requests to the /upload endpoint that have come from outside the
-        cluster. (This is considered if the request has the `X-Forwarded-For` header set.)
+        Enable secure upload. This will prevent any requests to the /upload endpoint that have not been authenticated 
+        by the proxy.
   -version
         Print version and exit.
 ```
@@ -84,6 +84,6 @@ GCS_BUCKET="puppet-reports"
 ```
 
 This will enable the `/upload` endpoint to only accept requests from within the cluster. This is done by checking the
-`X-Forwarded-For` header to see if the request has come from within the cluster. This is useful if you are using
+`Proxy-Authentication-Info` header to see if the request has come from within the cluster. This is useful if you are using
 something like Ambassador to expose the `/upload` endpoint to the internet. You would then use a proxy such as NGINX
 with authentication to allow access to the `/upload` endpoint.
