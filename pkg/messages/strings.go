@@ -10,6 +10,9 @@ const (
 	// ErrDuplicate is the error message for duplicate.
 	ErrDuplicate = "Duplicate record"
 
+	// ErrUnauthorized is the error message for unauthorized.
+	ErrUnauthorized = "Unauthorized"
+
 	// ErrRequestAlreadyInProgress is the error message for already processing.
 	ErrRequestAlreadyInProgress = "A request is already being processed for this path"
 

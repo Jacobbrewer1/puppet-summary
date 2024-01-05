@@ -12,7 +12,7 @@ const (
 	appName = "summary"
 )
 
-var secureUpload = flag.Bool("secure-upload", false, "Does not allow requests that have come from outside the cluster")
+var uploadToken = flag.String("upload-token", "", "The Bearer token used to authenticate requests to the upload endpoint.")
 
 func generateConfig() error {
 	err := dataaccess.ConnectDatabase()
