@@ -15,10 +15,16 @@ import (
 
 // uploadHandler takes the uploaded file and stores it in the database.
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	if *secureUpload && r.Header.Get("Proxy-Authentication-Info") == "" {
-		slog.Debug("Request is not internal", slog.String("remote_addr", r.RemoteAddr))
-		request.UnauthorizedHandler().ServeHTTP(w, r)
-		return
+	if *uploadToken != "" {
+		// Check the token.
+		if r.Header.Get("Authorization") != "Bearer "+*uploadToken {
+			slog.Warn("Invalid token")
+			w.WriteHeader(http.StatusUnauthorized)
+			if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrUnauthorized)); err != nil {
+				slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			}
+			return
+		}
 	}
 
 	if r.Body == http.NoBody {

@@ -8,7 +8,7 @@ using `SQLITE` and storing the YAML files on the local filesystem.
 This repo has been updated to use MySQL, MongoDB or SQLite as the database backend and also has the ability to upload
 the raw reports to Google Cloud Storage for further processing. This also allows for more than one instance of the
 application to be running at the same time. By allowing for MySQL or MongoDB as the database backend, this allows for
-for data retention on a more reliable database.
+data retention on a more reliable database.
 
 ## Usage
 
@@ -16,13 +16,12 @@ for data retention on a more reliable database.
 
 ```text
 Usage of ./puppet-summary:
-  -db string
+  -db <string>
         Database to use (default "sqlite"). Valid options are: sqlite, mysql, mongo.
   -gcs
         Enable Google Cloud Storage upload.
-  -secure-upload
-        Enable secure upload. This will prevent any requests to the /upload endpoint that have not been authenticated 
-        by the proxy.
+  -upload-token <string>
+        Enables secure upload. Requires a token to be specified. This is useful if you want to prevent any unauthorised requests to the /upload endpoint.
   -version
         Print version and exit.
 ```
@@ -80,10 +79,11 @@ GCS_BUCKET="puppet-reports"
 #### Secure Upload
 
 ```shell
-./puppet-summary -secure-upload
+./puppet-summary -upload-token <token>
 ```
 
-This will enable the `/upload` endpoint to only accept requests from within the cluster. This is done by checking the
-`Proxy-Authentication-Info` header to see if the request has come from within the cluster. This is useful if you are using
-something like Ambassador to expose the `/upload` endpoint to the internet. You would then use a proxy such as NGINX
-with authentication to allow access to the `/upload` endpoint.
+This will enable the `/upload` endpoint to only accept requests that have this Bearer token in the `Authorization`
+header. This is useful if you want to prevent any unauthorised requests to the `/upload` endpoint. One architecture
+pattern that you could use is to have a proxy in front of the Puppet Summary application that will handle the
+authentication and then forward the request to the Puppet Summary application with the Bearer token in the
+`Authorization` header.
