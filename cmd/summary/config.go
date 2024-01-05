@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 )
@@ -22,6 +23,11 @@ func generateConfig() error {
 	err = dataaccess.ConnectGCS()
 	if err != nil {
 		return fmt.Errorf("error connecting to GCS: %w", err)
+	}
+	if *uploadToken != "" {
+		slog.Info("Upload token set, security on upload endpoint is enabled")
+	} else {
+		slog.Info("Upload token not set, upload endpoint is not secure")
 	}
 	return nil
 }
