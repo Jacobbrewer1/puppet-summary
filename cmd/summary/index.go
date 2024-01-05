@@ -58,7 +58,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			key := fmt.Sprintf("%s-%s", node.Fqdn, node.Env)
 
 			// Now check if the node is already in the map.
-			if _, ok := filteredNodesMap[node.Fqdn]; !ok {
+			if _, ok := filteredNodesMap[key]; !ok {
 				filteredNodesMap[key] = node
 			} else {
 				// The node is already in the map, so we need to check if the node has a newer timestamp.
