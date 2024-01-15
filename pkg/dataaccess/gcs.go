@@ -7,9 +7,13 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
+	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -29,6 +33,9 @@ type Storage interface {
 
 	// DeleteFile deletes a file from the storage bucket.
 	DeleteFile(ctx context.Context, filePath string) error
+
+	// Purge purges the data from the storage bucket out of the given range.
+	Purge(ctx context.Context, from entities.Datetime) (int, error)
 }
 
 type storageImpl struct {
@@ -133,16 +140,79 @@ func (s *storageImpl) DeleteFile(ctx context.Context, filePath string) error {
 	return nil
 }
 
+func (s *storageImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
+	if !GCSEnabled {
+		// GCS is not enabled, so do nothing.
+		return 0, nil
+	}
+
+	// Start the prometheus timer.
+	t := prometheus.NewTimer(GCSLatency.With(prometheus.Labels{"query": "purge"}))
+	defer t.ObserveDuration()
+
+	// Connect to the bucket.
+	bkt := s.gcs.Bucket(s.bucket)
+
+	// Get a list of all the files in the bucket.
+	it := bkt.Objects(ctx, nil)
+
+	count := 0
+
+	// Iterate through the files.
+	for {
+		// Get the next file.
+		attrs, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			// There are no more files, so break out of the loop.
+			break
+		}
+
+		// Get the file name.
+		fileName := attrs.Name
+
+		// Ignore JSON files.
+		if strings.HasSuffix(fileName, ".json") {
+			continue
+		}
+
+		// Remove the path (report/environment/fqdn) from the file name.
+		fileName = fileName[strings.LastIndex(fileName, "/")+1:]
+
+		// Remove the file extension.
+		fileName = fileName[:len(fileName)-len(".yaml")]
+
+		// Parse the file date from the file name.
+		fileDate, err := time.Parse(time.RFC3339, fileName)
+		if err != nil {
+			slog.Warn(fmt.Sprintf("Error parsing file date from file name: %s", fileName))
+			continue
+		}
+
+		// Check if the file date is before the purge date.
+		if fileDate.After(time.Time(from)) {
+			continue
+		}
+
+		// Delete the file.
+		err = bkt.Object(attrs.Name).Delete(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("error deleting file: %w", err)
+		}
+
+		count++
+	}
+
+	return count, nil
+}
+
 func ConnectGCS() error {
-	if !*gcsFlag {
+	if !GCSEnabled {
 		// GCS is not enabled, so do nothing.
 		// Set the GCS variable to an empty storage implementation to prevent nil pointer errors.
 		slog.Debug("GCS is not enabled, skipping connection")
 		GCS = newStorage(nil, "")
 		return nil
 	}
-
-	GCSEnabled = true
 
 	// Get the service account credentials from the environment variable.
 	gcsCredentials := os.Getenv(envGCSCredentials)

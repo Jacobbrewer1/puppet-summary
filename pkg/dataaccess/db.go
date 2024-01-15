@@ -2,7 +2,6 @@ package dataaccess
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"strings"
 
@@ -35,20 +34,21 @@ type Database interface {
 
 	// GetEnvironments returns all environments from the database.
 	GetEnvironments(ctx context.Context) ([]entities.Environment, error)
+
+	// Purge purges the data from the database out of the given range.
+	Purge(ctx context.Context, from entities.Datetime) (int, error)
 }
 
-func ConnectDatabase() error {
-	flag.Parse()
+func ConnectDatabase(dbType string) error {
+	dbType = strings.TrimSpace(dbType)
+	dbType = strings.ToUpper(dbType)
 
-	*dbFlag = strings.TrimSpace(*dbFlag)
-	*dbFlag = strings.ToUpper(*dbFlag)
-
-	opt := dbOpt(*dbFlag)
+	opt := dbOpt(dbType)
 	if !opt.Valid() {
 		panic("Invalid database option")
 	}
 
-	switch dbOpt(*dbFlag) {
+	switch opt {
 	case dbMongo:
 		connectMongoDB()
 	case dbMySQL:
@@ -56,8 +56,7 @@ func ConnectDatabase() error {
 	case dbSqlite:
 		connectSQLite()
 	default:
-		// This should never happen as we check for validity in init(). We also have a default of SQLite s
-		return fmt.Errorf("invalid database option, %s", *dbFlag)
+		return fmt.Errorf("invalid database option, %s", dbType)
 	}
 	return nil
 }

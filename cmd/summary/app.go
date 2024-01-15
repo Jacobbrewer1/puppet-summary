@@ -25,9 +25,13 @@ func newApp(_ *slog.Logger, r *mux.Router) *app {
 	}
 }
 
-func (a *app) run() error {
+func (a *app) run(purgeDays int) error {
 	if err := a.init(); err != nil {
 		return fmt.Errorf("error initializing app: %w", err)
+	}
+
+	if err := setupPurge(purgeDays); err != nil {
+		return fmt.Errorf("error setting up purge: %w", err)
 	}
 
 	if err := a.srv.ListenAndServe(); err != nil {
@@ -50,6 +54,7 @@ func (a *app) init() error {
 
 	a.r.HandleFunc(pathMetrics, middlewareHttp(promhttp.Handler().ServeHTTP, AuthOptionInternal)).Methods(http.MethodGet)
 	a.r.HandleFunc(pathHealth, middlewareHttp(healthHandler(), AuthOptionInternal)).Methods(http.MethodGet)
+
 	a.r.NotFoundHandler = request.NotFoundHandler()
 	a.r.MethodNotAllowedHandler = request.MethodNotAllowedHandler()
 

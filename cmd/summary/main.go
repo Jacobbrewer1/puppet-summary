@@ -1,14 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
-	"log"
-	"log/slog"
 	"os"
-	"runtime"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
+	"github.com/google/subcommands"
 )
 
 // Set at linking time
@@ -17,33 +15,20 @@ var (
 	Date   string
 )
 
-var versionFlag = flag.Bool("version", false, "Print version information and exit")
-
 func main() {
-	flag.Parse()
-	if *versionFlag {
-		fmt.Printf(
-			"Commit: %s\nRuntime: %s %s/%s\nDate: %s\n",
-			Commit,
-			runtime.Version(),
-			runtime.GOOS,
-			runtime.GOARCH,
-			Date,
-		)
-		os.Exit(0)
+	_, err := logging.CommonLogger(logging.NewConfig(appName))
+	if err != nil {
+		panic(err)
 	}
 
-	a, err := initializeApp()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	if err := generateConfig(); err != nil {
-		slog.Error("Error generating config", slog.String(logging.KeyError, err.Error()))
-		os.Exit(1)
-	}
-	slog.Debug("Starting application")
-	if err := a.run(); err != nil {
-		slog.Error("Error running application", slog.String(logging.KeyError, err.Error()))
-		os.Exit(1)
-	}
+	subcommands.Register(subcommands.HelpCommand(), "")
+	subcommands.Register(subcommands.FlagsCommand(), "")
+	subcommands.Register(subcommands.CommandsCommand(), "")
+
+	subcommands.Register(new(versionCmd), "")
+	subcommands.Register(new(serveCmd), "")
+
+	flag.Parse()
+	ctx := context.Background()
+	os.Exit(int(subcommands.Execute(ctx)))
 }

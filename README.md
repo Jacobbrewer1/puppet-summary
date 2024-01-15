@@ -10,40 +10,12 @@ the raw reports to Google Cloud Storage for further processing. This also allows
 application to be running at the same time. By allowing for MySQL or MongoDB as the database backend, this allows for
 data retention on a more reliable database.
 
-## Usage
-
-### Flags
-
-```text
-Usage of ./puppet-summary:
-  -db <string>
-        Database to use (default "sqlite"). Valid options are: sqlite, mysql, mongo.
-  -gcs
-        Enable Google Cloud Storage upload.
-  -upload-token <string>
-        Enables secure upload. Requires a token to be specified. This is useful if you want to prevent any unauthorised requests to the /upload endpoint.
-  -version
-        Print version and exit.
-```
-
-### Setup
-
-#### SQLite
-
-```shell
-./puppet-summary -db sqlite
-```
-
-This will create a `puppet-summary.db` file in the current directory.
+## Setup
 
 #### MySQL
 
-```shell
-./puppet-summary -db mysql
-```
-
-For this, you will be required to specify a `MYSQL_CONNECTION` environment variable with the connection string to your
-MySQL database. For example:
+When using MySQL, you will be required to specify a `MYSQL_CONNECTION` environment variable with the connection string
+to your MySQL database. For example:
 
 ```text
 MYSQL_CONNECTION="root:Password01@tcp(localhost:3306)/puppet-summary?timeout=90s&multiStatements=true&parseTime=true"
@@ -51,15 +23,11 @@ MYSQL_CONNECTION="root:Password01@tcp(localhost:3306)/puppet-summary?timeout=90s
 
 #### MongoDB
 
-```shell
-./puppet-summary -db mongo
-```
-
-For this, you will be required to specify a `MONGO_URI` environment variable with the connection URI to your MongoDB
-database. For example:
+When using MongoDB, you will be required to specify a `MONGO_URI` environment variable with the connection URI to your
+MongoDB database. For example:
 
 ```text
-mongodb+srv://user:password@host/?retryWrites=true
+MONGO_URI="mongodb+srv://user:password@host/?retryWrites=true"
 ```
 
 #### Google Cloud Storage

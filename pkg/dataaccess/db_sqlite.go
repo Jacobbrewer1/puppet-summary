@@ -47,6 +47,34 @@ type sqliteImpl struct {
 	client *sql.DB
 }
 
+func (s *sqliteImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
+	sqlStmt := `
+	DELETE FROM reports
+	WHERE executed_at < ?;
+`
+
+	// Start the prometheus metrics.
+	t := prometheus.NewTimer(DatabaseLatency.WithLabelValues("purge"))
+	defer t.ObserveDuration()
+
+	stmt, err := s.client.PrepareContext(ctx, sqlStmt)
+	if err != nil {
+		return 0, fmt.Errorf("error preparing statement: %w", err)
+	}
+
+	res, err := stmt.ExecContext(ctx, from.Time().Format(time.DateTime))
+	if err != nil {
+		return 0, fmt.Errorf("error executing statement: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("error getting rows affected: %w", err)
+	}
+
+	return int(rows), nil
+}
+
 func (s *sqliteImpl) GetEnvironments(ctx context.Context) ([]entities.Environment, error) {
 	sqlStmt := `
 	SELECT DISTINCT environment 
