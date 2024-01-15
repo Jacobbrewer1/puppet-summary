@@ -44,6 +44,9 @@ jobs:
           path: ./
           token: ${{ secrets.PAT_TOKEN }}
 
+      - name: list
+        run: ls -la .github/workflows
+
       - name: Deploy Puppet Summary
         uses: ./.github/workflows/ci-deploy-puppet-summary.yml
         with:
