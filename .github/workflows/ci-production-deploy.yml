@@ -45,6 +45,8 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
 
       - name: Deploy Puppet Summary
-        uses: ./.github/workflows/ci-deploy-puppet-summary.yml
-        with:
-          tag: ${{ needs.build.outputs.sha_short_deploy }}
+        run: |
+          # List all files in the current directory
+          ls -a
+          # List all files in the .github directory
+          ls -a .github/workflows
