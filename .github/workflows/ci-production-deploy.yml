@@ -38,6 +38,7 @@ jobs:
     name: Deploy Puppet Summary
     runs-on: ubuntu-latest
     needs: [build, setup]
+    environment: production
 
     steps:
       - name: Checkout repository
