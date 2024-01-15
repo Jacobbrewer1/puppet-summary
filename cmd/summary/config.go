@@ -22,6 +22,7 @@ func (s *serveCmd) generateConfig() error {
 		return fmt.Errorf("error connecting to database: %w", err)
 	}
 	if s.gcs {
+		dataaccess.GCSEnabled = true
 		err = dataaccess.ConnectGCS()
 		if err != nil {
 			return fmt.Errorf("error connecting to GCS: %w", err)
