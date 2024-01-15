@@ -46,3 +46,5 @@ jobs:
 
       - name: Deploy Puppet Summary
         uses: ./.github/workflows/ci-deploy-puppet-summary.yml
+        with:
+          tag: ${{ needs.build.outputs.sha_short_deploy }}
