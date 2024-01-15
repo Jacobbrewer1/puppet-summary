@@ -15,20 +15,6 @@ jobs:
     uses: jacobbrewer1/puppet-summary/.github/workflows/ci-docker.yml@main
     secrets: inherit
 
-  setup:
-    name: Setup
-    runs-on: ubuntu-latest
-    needs: [ build ]
-    permissions: write-all
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Get commit
-        id: get_commit
-        run: echo "sha_short_deploy=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT
-
   deploy:
     name: Deploy Puppet Summary
     runs-on: ubuntu-latest
@@ -38,16 +24,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Get commit
+        id: get_commit
+        run: echo "sha_short_deploy=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           ref: main
           repository: Jacobbrewer1/supporting-charts
-          path: ./
+          path: ./charts
           token: ${{ secrets.PAT_TOKEN }}
 
-      - name: list
-        run: ls -la .github/workflows
-
       - name: Deploy Puppet Summary
-        uses: ./.github/workflows/ci-deploy-puppet-summary
-        with:
-          tag: ${{ needs.build.outputs.sha_short_deploy }}
+        working-directory: ./charts
+        run: |
+          helm upgrade --install puppet-summary . --values valueFiles/prod-1/puppet-summary.yaml --set image.tag=${{ github.event.inputs.tag }}
