@@ -62,6 +62,26 @@ type mongodbImpl struct {
 	client *mongo.Client
 }
 
+func (m *mongodbImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
+	collection := m.client.Database(mongoDatabase).Collection("reports")
+
+	// Start the prometheus metrics.
+	t := prometheus.NewTimer(DatabaseLatency.WithLabelValues("purge"))
+	defer t.ObserveDuration()
+
+	// Delete the reports from the database out of the given range.
+	res, err := collection.DeleteMany(ctx, bson.M{
+		"exec_time": bson.M{
+			"$lt": from.String(),
+		},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("error purging data: %w", err)
+	}
+
+	return int(res.DeletedCount), nil
+}
+
 func (m *mongodbImpl) GetEnvironments(ctx context.Context) ([]entities.Environment, error) {
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 

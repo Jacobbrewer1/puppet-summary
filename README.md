@@ -16,34 +16,24 @@ data retention on a more reliable database.
 
 ```text
 Usage of ./puppet-summary:
-  -db <string>
-        Database to use (default "sqlite"). Valid options are: sqlite, mysql, mongo.
+  -auto-purge int
+        The number of days to keep data for. If 0 (or not set), data will not be purged.
+  -db string
+        The database to use. Valid options are: sqlite, mysql, mongo (default "sqlite")
   -gcs
-        Enable Google Cloud Storage upload.
-  -upload-token <string>
-        Enables secure upload. Requires a token to be specified. This is useful if you want to prevent any unauthorised requests to the /upload endpoint.
+        Whether to use Google Cloud Storage
+  -upload-token string
+        The Bearer token used to authenticate requests to the upload endpoint.
   -version
-        Print version and exit.
+        Print version information and exit
 ```
 
 ### Setup
 
-#### SQLite
-
-```shell
-./puppet-summary -db sqlite
-```
-
-This will create a `puppet-summary.db` file in the current directory.
-
 #### MySQL
 
-```shell
-./puppet-summary -db mysql
-```
-
-For this, you will be required to specify a `MYSQL_CONNECTION` environment variable with the connection string to your
-MySQL database. For example:
+When using MySQL, you will be required to specify a `MYSQL_CONNECTION` environment variable with the connection string
+to your MySQL database. For example:
 
 ```text
 MYSQL_CONNECTION="root:Password01@tcp(localhost:3306)/puppet-summary?timeout=90s&multiStatements=true&parseTime=true"
@@ -51,15 +41,11 @@ MYSQL_CONNECTION="root:Password01@tcp(localhost:3306)/puppet-summary?timeout=90s
 
 #### MongoDB
 
-```shell
-./puppet-summary -db mongo
-```
-
-For this, you will be required to specify a `MONGO_URI` environment variable with the connection URI to your MongoDB
-database. For example:
+When using MongoDB, you will be required to specify a `MONGO_URI` environment variable with the connection URI to your
+MongoDB database. For example:
 
 ```text
-mongodb+srv://user:password@host/?retryWrites=true
+MONGO_URI="mongodb+srv://user:password@host/?retryWrites=true"
 ```
 
 #### Google Cloud Storage

@@ -1,11 +1,5 @@
 package dataaccess
 
-import (
-	"flag"
-)
-
-var dbFlag = flag.String("db", "sqlite", "The database to use. Valid options are: sqlite, mysql, mongo")
-
 type dbOpt string
 
 const (
@@ -39,7 +33,5 @@ func (d dbOpt) Valid() bool {
 		dbMongo,
 	)
 }
-
-var gcsFlag = flag.Bool("gcs", false, "Whether to use Google Cloud Storage")
 
 var GCSEnabled = false
