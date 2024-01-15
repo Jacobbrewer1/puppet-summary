@@ -38,6 +38,7 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
 
       - name: Deploy Puppet Summary
-        working-directory: ./charts
-        run: |
-          helm upgrade --install puppet-summary . --values valueFiles/prod-1/puppet-summary.yaml --set image.tag=${{ github.event.inputs.tag }}
+        uses: WyriHaximus/github-action-helm3@v3
+        with:
+          exec: helm upgrade --install puppet-summary ./charts --values charts/valueFiles/prod-1/puppet-summary.yaml --set image.tag=${{ steps.vars_deploy.outputs.sha_short_deploy }}
+          kubeconfig: '${{ secrets.KUBE_CONFIG }}'
