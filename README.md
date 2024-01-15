@@ -10,25 +10,7 @@ the raw reports to Google Cloud Storage for further processing. This also allows
 application to be running at the same time. By allowing for MySQL or MongoDB as the database backend, this allows for
 data retention on a more reliable database.
 
-## Usage
-
-### Flags
-
-```text
-Usage of ./puppet-summary:
-  -auto-purge int
-        The number of days to keep data for. If 0 (or not set), data will not be purged.
-  -db string
-        The database to use. Valid options are: sqlite, mysql, mongo (default "sqlite")
-  -gcs
-        Whether to use Google Cloud Storage
-  -upload-token string
-        The Bearer token used to authenticate requests to the upload endpoint.
-  -version
-        Print version information and exit
-```
-
-### Setup
+## Setup
 
 #### MySQL
 

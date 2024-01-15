@@ -3,8 +3,9 @@ package dataaccess
 import (
 	"context"
 	"fmt"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"strings"
+
+	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 )
 
 var DB Database

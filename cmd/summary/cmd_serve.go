@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
+
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/google/subcommands"
-	"log/slog"
 )
 
 type serveCmd struct {
