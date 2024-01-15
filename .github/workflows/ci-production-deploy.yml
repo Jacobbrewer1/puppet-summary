@@ -41,12 +41,10 @@ jobs:
         with:
           ref: main
           repository: Jacobbrewer1/supporting-charts
-          path: ./charts
+          path: ./
           token: ${{ secrets.PAT_TOKEN }}
 
       - name: Deploy Puppet Summary
-        run: |
-          # List all files in the current directory
-          ls -a
-          # List all files in the .github directory
-          ls -a .github/workflows
+        uses: ./.github/workflows/ci-deploy-puppet-summary.yml
+        with:
+          tag: ${{ needs.build.outputs.sha_short_deploy }}
