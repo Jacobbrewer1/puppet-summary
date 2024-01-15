@@ -48,6 +48,6 @@ jobs:
         run: ls -la .github/workflows
 
       - name: Deploy Puppet Summary
-        uses: ./.github/workflows/ci-deploy-puppet-summary.yml
+        uses: ${{ github.workspace }}/.github/workflows/ci-deploy-puppet-summary.yml
         with:
           tag: ${{ needs.build.outputs.sha_short_deploy }}
