@@ -8,11 +8,6 @@ name: Production Deploy
 on:
   workflow_dispatch:
 
-# We only want one build to run at a time for each branch
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   build:
     name: Build All
