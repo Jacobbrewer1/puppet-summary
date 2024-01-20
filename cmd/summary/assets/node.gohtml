@@ -15,7 +15,7 @@
         window.onload = function () {
             var points = [
                 {{range .Nodes }}
-{{/*                    Convert the time to seconds and remove the identifying "s"*/}}
+                {{/* Convert the time to seconds and remove the identifying "s"*/}}
                 {{graphConvert .Runtime}},
                 {{end}}
             ];
@@ -64,6 +64,28 @@
 
             var ctx = document.getElementById("canvas").getContext("2d");
             window.myLine = new Chart(ctx, config);
+
+            // Add click-handler for graph-points.
+            document.getElementById("canvas").onclick = function (evt) {
+                // Get the event that invoked us.
+                var activePoints = window.myLine.getElementsAtEvent(evt);
+                if (activePoints && Array.isArray(activePoints)) {
+                    // Find the point we've got.
+                    var firstPoint = activePoints[0];
+                    if (firstPoint) {
+                        // If we got a point then find the label.
+                        var label = window.myLine.data.labels[firstPoint._index];
+                        if (label) {
+                            // Our label is something like "8" which means we need to jump to the table row with ID "data_8".
+                            tmp = "#data_" + label;
+                            // Scroll there.
+                            $('html, body').animate({
+                                scrollTop: $(tmp).offset().top
+                            }, 500);
+                        }
+                    }
+                }
+            };
         };
     </script>
 </head>
@@ -100,8 +122,12 @@
     </div>
 </nav>
 <div class="container">
-    <h1>{{.Fqdn}}</h1>
-    <canvas id="canvas" style="height: 200px; width: 90%; margin-left:5%; margin-right:5%"></canvas>
+    <h1 class="text-center">{{.Fqdn}}</h1>
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <canvas id="canvas" style="height: 200px; width: 100%;"></canvas>
+        </div>
+    </div>
     <p>&nbsp;</p>
     <table class="table table-bordered table-striped table-condensed table-hover">
         <tr>
