@@ -146,10 +146,15 @@
         </div>
     </div>
 </nav>
+
 <div class="container">
 
     <h1>Node Summary{{if ne .Environment "" }} for environment: {{.Environment}}{{ end }}</h1>
-    <canvas id="canvas" style="height: 150px; width: 90%; margin-left:5%; margin-right:5%"></canvas>
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <canvas id="canvas" style="height: 150px; width: 100%;"></canvas>
+        </div>
+    </div>
     <div id="fcanvas"></div>
     <p>&nbsp;</p>
 
