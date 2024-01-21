@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
@@ -54,6 +55,11 @@ func nodeFqdnHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	// Sort the reports by the time they were received.
+	sort.Slice(reps, func(i, j int) bool {
+		return reps[i].ExecTime.Time().Before(reps[j].ExecTime.Time())
+	})
 
 	type PageData struct {
 		Fqdn      string

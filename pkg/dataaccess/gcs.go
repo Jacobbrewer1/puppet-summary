@@ -205,7 +205,7 @@ func (s *storageImpl) Purge(ctx context.Context, from entities.Datetime) (int, e
 	return count, nil
 }
 
-func ConnectGCS() error {
+func ConnectGCS(gcsBucket string) error {
 	if !GCSEnabled {
 		// GCS is not enabled, so do nothing.
 		// Set the GCS variable to an empty storage implementation to prevent nil pointer errors.
@@ -228,7 +228,6 @@ func ConnectGCS() error {
 	cs := client
 
 	// Get the bucket name from the environment variable and validate that it exists.
-	gcsBucket := os.Getenv(envGCSBucket)
 	if gcsBucket == "" {
 		return errors.New("no GCS bucket provided")
 	}
