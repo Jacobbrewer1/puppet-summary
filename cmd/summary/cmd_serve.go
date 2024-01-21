@@ -21,6 +21,9 @@ type serveCmd struct {
 
 	// gcs is whether to use Google Cloud Storage.
 	gcs bool
+
+	// gcsBucket is the name of the Google Cloud Storage bucket to use. (Only used if gcs is true.)
+	gcsBucket string
 }
 
 func (s *serveCmd) Name() string {
@@ -42,6 +45,7 @@ func (s *serveCmd) SetFlags(f *flag.FlagSet) {
 	f.IntVar(&s.autoPurge, "auto-purge", 0, "The number of days to keep data for. If 0 (or not set), data will not be purged.")
 	f.StringVar(&s.dbType, "db", "sqlite", "The type of database to use. Valid values are 'sqlite', 'mysql', and 'mongodb'.")
 	f.BoolVar(&s.gcs, "gcs", false, "Whether to use Google Cloud Storage.")
+	f.StringVar(&s.gcsBucket, "gcs-bucket", "", "The name of the Google Cloud Storage bucket to use. (Only used if gcs is enabled.)")
 }
 
 func (s *serveCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {

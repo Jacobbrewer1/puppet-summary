@@ -23,7 +23,7 @@ func (s *serveCmd) generateConfig() error {
 	}
 	if s.gcs {
 		dataaccess.GCSEnabled = true
-		err = dataaccess.ConnectGCS()
+		err = dataaccess.ConnectGCS(s.gcsBucket)
 		if err != nil {
 			return fmt.Errorf("error connecting to GCS: %w", err)
 		}
