@@ -320,11 +320,6 @@ func parsePuppetReport(content []byte) (*entities.PuppetReport, error) {
 		return rep, errors.New("failed to parse YAML")
 	}
 
-	// Store the SHA1-hash of the content as the ID. This is used to detect duplicate submissions.
-	helper := sha1.New()
-	helper.Write(content)
-	rep.ID = fmt.Sprintf("%x", helper.Sum(nil))
-
 	err = parseHost(yaml, rep)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host: %w", err)
@@ -364,6 +359,13 @@ func parsePuppetReport(content []byte) (*entities.PuppetReport, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse results: %w", err)
 	}
+
+	rep.SortResources()
+
+	// Store the SHA1-hash of the content as the ID. This is used to detect duplicate submissions.
+	helper := sha1.New()
+	helper.Write(content)
+	rep.ID = fmt.Sprintf("%x", helper.Sum(nil))
 
 	return rep, nil
 }
