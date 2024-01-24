@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log/slog"
 	"net/http"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/google/subcommands"
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
