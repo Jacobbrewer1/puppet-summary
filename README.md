@@ -41,7 +41,7 @@ be required to specify a `gcs-bucket` flag with the name of the bucket to upload
 the `GCS_CREDENTIALS` environment variable with the contents of the JSON credentials file. For example:
 
 ```text
-GCS_BUCKET="puppet-reports"
+GCS_CREDENTIALS=<json-contents>
 ```
 
 #### Secure Upload

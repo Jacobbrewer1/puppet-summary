@@ -9,7 +9,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess/connection"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,7 +21,7 @@ const EnvMongoURI = `MONGO_URI`
 
 const mongoDatabase = "puppet-summary"
 
-func connectMongoDB() {
+func connectMongoDB(ctx context.Context) {
 	connectionString := os.Getenv(EnvMongoURI)
 	if connectionString != "" {
 		slog.Debug("Found MongoDB URI in environment")
@@ -32,14 +31,19 @@ func connectMongoDB() {
 		os.Exit(1)
 	}
 
-	mongoConn := new(connection.MongoDB)
-	mongoConn.ConnectionString = connectionString
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
-	dbConn, err := mongoConn.Connect()
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	opts := options.Client().ApplyURI(connectionString).SetServerAPIOptions(serverAPI)
+	opts.SetAppName(mongoDatabase)
+
+	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
 		slog.Error("Error connecting to mongo", slog.String(logging.KeyError, err.Error()))
 		os.Exit(1)
-	} else if dbConn == nil {
+	} else if client == nil {
 		slog.Error("MongoDB came back nil", slog.String(logging.KeyError, "MongoDB came back nil"))
 		os.Exit(1)
 	}
@@ -48,7 +52,7 @@ func connectMongoDB() {
 
 	DB = &mongodbImpl{
 		l:      l,
-		client: dbConn,
+		client: client,
 	}
 
 	slog.Debug("Connected to MongoDB")
@@ -60,6 +64,10 @@ type mongodbImpl struct {
 
 	// client is the database.
 	client *mongo.Client
+}
+
+func (m *mongodbImpl) Close(ctx context.Context) error {
+	return m.client.Disconnect(ctx)
 }
 
 func (m *mongodbImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
