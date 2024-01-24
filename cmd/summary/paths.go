@@ -1,7 +1,9 @@
 package main
 
 const (
-	pathIndex    = "/"
+	pathIndex = "/"
+	pathApi   = "/api"
+
 	pathIndexEnv = "/environment/{env}"
 
 	pathAssets = "/assets/"
@@ -9,17 +11,15 @@ const (
 	pathMetrics = "/metrics"
 	pathHealth  = "/health"
 
-	pathUpload   = "/upload"
-	pathRadiator = "/radiator"
-	pathSearch   = "/search"
+	pathUpload = "/upload"
 
 	pathNodes    = "/nodes"
 	pathNodeFqdn = pathNodes + "/{node_fqdn}"
+	pathNodesEnv = pathNodes + "/environment/{env}"
 
 	pathReports  = "/reports"
 	pathReportID = pathReports + "/{report_id}"
 
-	pathApi       = "/api"
-	pathApiStates = pathApi + "/states"
-	pathApiState  = pathApiStates + "/{state_id}"
+	pathStates  = "/states"
+	pathStateID = pathStates + "/{state_id}"
 )

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
@@ -82,8 +83,16 @@ func reportIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Sort the report resources.
 	report.SortResources()
-
 	rep = report
+
+	if strings.HasPrefix(r.URL.Path, "/api") {
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(rep); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	}
 
 	type PageData struct {
 		Report    *entities.PuppetReport

@@ -110,7 +110,7 @@ type PuppetReport struct {
 	ResourcesOK []*PuppetResource `json:"resources_ok" bson:"resources_ok"`
 
 	// YamlFile is the file the report was read from.
-	YamlFile string `json:"yamlFile" bson:"yamlFile"`
+	YamlFile string `json:"-" bson:"yamlFile"`
 }
 
 func (n *PuppetReport) ReportFilePath() string {
