@@ -121,14 +121,13 @@ func (s *serveCmd) setupRoutes(r *mux.Router) {
 	apiRouter := r.PathPrefix(pathApi).Subrouter()
 
 	r.HandleFunc(pathUpload, middlewareHttp(uploadHandler, AuthOptionNone)).Methods(http.MethodPost)
+	apiRouter.HandleFunc(pathStateID, middlewareHttp(stateHandler, AuthOptionNone)).Methods(http.MethodGet)
 
 	r.HandleFunc(pathIndex, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
 	apiRouter.HandleFunc(pathNodes, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
 
 	r.HandleFunc(pathIndexEnv, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
 	apiRouter.HandleFunc(pathNodesEnv, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathApiState, middlewareHttp(stateHandler, AuthOptionNone)).Methods(http.MethodGet)
 
 	r.HandleFunc(pathNodeFqdn, middlewareHttp(nodeFqdnHandler, AuthOptionNone)).Methods(http.MethodGet)
 	apiRouter.HandleFunc(pathNodeFqdn, middlewareHttp(nodeFqdnHandler, AuthOptionNone)).Methods(http.MethodGet)
