@@ -97,11 +97,11 @@ func (s *serveCmd) generateConfig() error {
 		return fmt.Errorf("error connecting to database: %w", err)
 	}
 	if s.gcs {
+		dataaccess.GCSEnabled = true
 		err = dataaccess.ConnectGCS(s.gcsBucket)
 		if err != nil {
 			return fmt.Errorf("error connecting to GCS: %w", err)
 		}
-		dataaccess.GCSEnabled = true
 	}
 	if s.uploadToken != "" {
 		slog.Info("Upload token set, security on upload endpoint is enabled")
