@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 )
 
