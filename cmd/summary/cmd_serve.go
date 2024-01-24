@@ -55,6 +55,11 @@ func (s *serveCmd) SetFlags(f *flag.FlagSet) {
 }
 
 func (s *serveCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+	if err := setupLogging(); err != nil {
+		fmt.Println("Error setting up logging:", err)
+		return subcommands.ExitFailure
+	}
+
 	r := mux.NewRouter()
 
 	if err := s.generateConfig(); err != nil {
