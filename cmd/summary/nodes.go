@@ -11,6 +11,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
@@ -60,6 +61,15 @@ func nodeFqdnHandler(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(reps, func(i, j int) bool {
 		return reps[i].ExecTime.Time().Before(reps[j].ExecTime.Time())
 	})
+
+	if strings.HasPrefix(r.URL.Path, "/api") {
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(reps); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	}
 
 	type PageData struct {
 		Fqdn      string

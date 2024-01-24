@@ -9,12 +9,11 @@ const (
 	pathMetrics = "/metrics"
 	pathHealth  = "/health"
 
-	pathUpload   = "/upload"
-	pathRadiator = "/radiator"
-	pathSearch   = "/search"
+	pathUpload = "/upload"
 
 	pathNodes    = "/nodes"
 	pathNodeFqdn = pathNodes + "/{node_fqdn}"
+	pathNodesEnv = pathNodes + "/environment/{env}"
 
 	pathReports  = "/reports"
 	pathReportID = pathReports + "/{report_id}"

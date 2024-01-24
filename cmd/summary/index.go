@@ -132,6 +132,16 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If the path prefix is "api", then we want to just encode the nodes as JSON and return them.
+	if strings.HasPrefix(r.URL.Path, "/api") {
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(filteredNodes); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	}
+
 	type PageData struct {
 		Graph        []*entities.PuppetHistory
 		Nodes        []*entities.PuppetRun
