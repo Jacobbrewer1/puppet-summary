@@ -47,6 +47,10 @@ type sqliteImpl struct {
 	client *sql.DB
 }
 
+func (s *sqliteImpl) Close(_ context.Context) error {
+	return s.client.Close()
+}
+
 func (s *sqliteImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
 	sqlStmt := `
 	DELETE FROM reports

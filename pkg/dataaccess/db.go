@@ -14,6 +14,9 @@ type Database interface {
 	// Ping pings the database.
 	Ping(ctx context.Context) error
 
+	// Close closes the database connection.
+	Close(ctx context.Context) error
+
 	// SaveRun saves a PuppetRun to the database.
 	SaveRun(ctx context.Context, run *entities.PuppetReport) error
 
@@ -39,7 +42,7 @@ type Database interface {
 	Purge(ctx context.Context, from entities.Datetime) (int, error)
 }
 
-func ConnectDatabase(dbType string) error {
+func ConnectDatabase(ctx context.Context, dbType string) error {
 	dbType = strings.TrimSpace(dbType)
 	dbType = strings.ToUpper(dbType)
 
@@ -50,7 +53,7 @@ func ConnectDatabase(dbType string) error {
 
 	switch opt {
 	case dbMongo:
-		connectMongoDB()
+		connectMongoDB(ctx)
 	case dbMySQL:
 		connectMysql()
 	case dbSqlite:

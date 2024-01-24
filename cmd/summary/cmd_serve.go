@@ -62,7 +62,7 @@ func (s *serveCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{
 
 	r := mux.NewRouter()
 
-	if err := s.generateConfig(); err != nil {
+	if err := s.generateConfig(ctx); err != nil {
 		slog.Error("Error generating configuration", slog.String(logging.KeyError, err.Error()))
 		return subcommands.ExitFailure
 	}
@@ -91,8 +91,8 @@ func (s *serveCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{
 	return subcommands.ExitSuccess
 }
 
-func (s *serveCmd) generateConfig() error {
-	err := dataaccess.ConnectDatabase(s.dbType)
+func (s *serveCmd) generateConfig(ctx context.Context) error {
+	err := dataaccess.ConnectDatabase(ctx, s.dbType)
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %w", err)
 	}

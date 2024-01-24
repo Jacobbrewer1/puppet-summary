@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess/connection"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/go-sql-driver/mysql"
@@ -28,10 +27,7 @@ func connectMysql() {
 		os.Exit(1)
 	}
 
-	mysqlConn := new(connection.MySQL)
-	mysqlConn.ConnectionString = connectionString
-
-	err := mysqlConn.Connect()
+	d, err := sql.Open("mysql", connectionString)
 	if err != nil {
 		slog.Error("Error connecting to mysql", slog.String(logging.KeyError, err.Error()))
 		os.Exit(1)
@@ -41,7 +37,7 @@ func connectMysql() {
 
 	impl := &mysqlImpl{
 		l:      l,
-		client: mysqlConn.Db,
+		client: d,
 	}
 
 	if err := impl.setup(); err != nil {
@@ -60,6 +56,10 @@ type mysqlImpl struct {
 
 	// client is the database.
 	client *sql.DB
+}
+
+func (m *mysqlImpl) Close(_ context.Context) error {
+	return m.client.Close()
 }
 
 func (m *mysqlImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
