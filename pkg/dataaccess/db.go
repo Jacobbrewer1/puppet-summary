@@ -8,6 +8,8 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 )
 
+const envDbConnStr = "DB_CONN_STR"
+
 var DB Database
 
 type Database interface {
