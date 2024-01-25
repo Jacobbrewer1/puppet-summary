@@ -15,10 +15,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const EnvMySQLConnection = `MYSQL_CONNECTION`
-
 func connectMysql() {
-	connectionString := os.Getenv(EnvMySQLConnection)
+	connectionString := os.Getenv(envDbConnStr)
 	if connectionString != "" {
 		slog.Debug("Found MySQL URI in environment")
 	} else {

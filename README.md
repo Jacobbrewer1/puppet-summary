@@ -14,20 +14,20 @@ data retention on a more reliable database.
 
 #### MySQL
 
-When using MySQL, you will be required to specify a `MYSQL_CONNECTION` environment variable with the connection string
+When using MySQL, you will be required to specify a `DB_CONN_STR` environment variable with the connection string
 to your MySQL database. For example:
 
 ```text
-MYSQL_CONNECTION="root:Password01@tcp(localhost:3306)/puppet-summary?timeout=90s&multiStatements=true&parseTime=true"
+DB_CONN_STR="root:Password01@tcp(localhost:3306)/puppet-summary?timeout=90s&multiStatements=true&parseTime=true"
 ```
 
 #### MongoDB
 
-When using MongoDB, you will be required to specify a `MONGO_URI` environment variable with the connection URI to your
+When using MongoDB, you will be required to specify a `DB_CONN_STR` environment variable with the connection URI to your
 MongoDB database. For example:
 
 ```text
-MONGO_URI="mongodb+srv://user:password@host/?retryWrites=true"
+DB_CONN_STR="mongodb+srv://user:password@host/?retryWrites=true"
 ```
 
 #### Google Cloud Storage

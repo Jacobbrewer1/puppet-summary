@@ -17,12 +17,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const EnvMongoURI = `MONGO_URI`
-
 const mongoDatabase = "puppet-summary"
 
 func connectMongoDB(ctx context.Context) {
-	connectionString := os.Getenv(EnvMongoURI)
+	connectionString := os.Getenv(envDbConnStr)
 	if connectionString != "" {
 		slog.Debug("Found MongoDB URI in environment")
 	} else {
