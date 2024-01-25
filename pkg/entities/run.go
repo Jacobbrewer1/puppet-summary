@@ -11,7 +11,6 @@ type PuppetRun struct {
 	State     State       `json:"state" bson:"state"`
 	ExecTime  Datetime    `json:"exec_time" bson:"exec_time"`
 	Runtime   Duration    `json:"runtime" bson:"runtime"`
-	Epoch     string      `json:"epoch" bson:"epoch"`
 	TimeSince Duration    `json:"time_since" bson:"time_since"`
 }
 
