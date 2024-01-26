@@ -2,11 +2,11 @@ package request
 
 import (
 	"encoding/json"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/messages"
 	"log/slog"
 	"net/http"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/messages"
 )
 
 // NotFoundHandler returns a handler that returns a 404 response.
