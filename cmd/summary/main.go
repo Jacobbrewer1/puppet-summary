@@ -5,7 +5,6 @@ import (
 	"flag"
 	"os"
 
-	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/google/subcommands"
 )
 
@@ -16,17 +15,13 @@ var (
 )
 
 func main() {
-	_, err := logging.CommonLogger(logging.NewConfig(appName))
-	if err != nil {
-		panic(err)
-	}
-
 	subcommands.Register(subcommands.HelpCommand(), "")
 	subcommands.Register(subcommands.FlagsCommand(), "")
 	subcommands.Register(subcommands.CommandsCommand(), "")
 
 	subcommands.Register(new(versionCmd), "")
 	subcommands.Register(new(serveCmd), "")
+	subcommands.Register(new(purgeCmd), "")
 
 	flag.Parse()
 	ctx := context.Background()
