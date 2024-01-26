@@ -18,7 +18,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	if uploadToken != "" {
 		// Check the token.
 		if r.Header.Get("Authorization") != "Bearer "+uploadToken {
-			slog.Warn("Invalid token")
+			slog.Warn("Invalid upload token", slog.String("token", r.Header.Get("Authorization")))
 			w.WriteHeader(http.StatusUnauthorized)
 			if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrUnauthorized)); err != nil {
 				slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
