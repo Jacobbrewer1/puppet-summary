@@ -15,9 +15,6 @@ type purgeCmd struct {
 	// days is the number of days to purge.
 	days int
 
-	// configPath is the path to the config file.
-	configPath string
-
 	// dbType is the type of database to connect to.
 	dbType string
 
@@ -44,7 +41,6 @@ func (p *purgeCmd) Usage() string {
 
 func (p *purgeCmd) SetFlags(f *flag.FlagSet) {
 	f.IntVar(&p.days, "days", 0, "The number of days to purge.")
-	f.StringVar(&p.configPath, "config", "", "The path to the config file.")
 	f.StringVar(&p.dbType, "db-type", "mysql", "The type of database to connect to.")
 	f.BoolVar(&p.gcs, "gcs", false, "Whether to connect to GCS.")
 	f.StringVar(&p.gcsBucket, "gcs-bucket", "", "The name of the GCS bucket to connect to.")

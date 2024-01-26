@@ -10,6 +10,47 @@ the raw reports to Google Cloud Storage for further processing. This also allows
 application to be running at the same time. By allowing for MySQL or MongoDB as the database backend, this allows for
 data retention on a more reliable database.
 
+## Usage
+
+There are multiple ways to run the application. You can either run the application directly on your host or you can
+run the application within a Docker container. The application will listen on port `8080` by default.
+
+### Commands
+
+The application has the following commands:
+
+#### Serve
+
+The `serve` command will start the application and listen on port `8080`. This is the primary command that you will
+use to run the application. 
+
+You can view the help for this command by running:
+
+```shell
+./puppet-summary serve --help
+```
+
+#### Purge
+
+The `purge` command will purge the database of data older than the specified number of days. This is useful if you
+want to keep the database size down.
+
+You can view the help for this command by running:
+
+```shell
+./puppet-summary purge --help
+```
+
+#### Version
+
+The `version` command will print the version of the application.
+
+This command does not have any flags and can be run by running:
+
+```shell
+./puppet-summary version
+```
+
 ## Setup
 
 #### MySQL
