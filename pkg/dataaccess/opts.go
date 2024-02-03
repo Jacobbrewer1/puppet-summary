@@ -1,23 +1,23 @@
 package dataaccess
 
-type dbOpt string
+type DbOpt string
 
 const (
-	// dbSqlite is the sqlite database.
-	dbSqlite dbOpt = "SQLITE"
+	// DbSqlite is the sqlite database.
+	DbSqlite DbOpt = "SQLITE"
 
-	// dbMySQL is the MySQL database.
-	dbMySQL dbOpt = "MYSQL"
+	// DbMySQL is the MySQL database.
+	DbMySQL DbOpt = "MYSQL"
 
-	// dbMongo is the MongoDB database.
-	dbMongo dbOpt = "MONGO"
+	// DbMongo is the MongoDB database.
+	DbMongo DbOpt = "MONGO"
 )
 
-func (d dbOpt) String() string {
+func (d DbOpt) String() string {
 	return string(d)
 }
 
-func (d dbOpt) IsIn(opts ...dbOpt) bool {
+func (d DbOpt) IsIn(opts ...DbOpt) bool {
 	for _, opt := range opts {
 		if opt == d {
 			return true
@@ -26,11 +26,11 @@ func (d dbOpt) IsIn(opts ...dbOpt) bool {
 	return false
 }
 
-func (d dbOpt) Valid() bool {
+func (d DbOpt) Valid() bool {
 	return d.IsIn(
-		dbSqlite,
-		dbMySQL,
-		dbMongo,
+		DbSqlite,
+		DbMySQL,
+		DbMongo,
 	)
 }
 
