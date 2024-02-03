@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
@@ -49,15 +50,22 @@ func (s *serveCmd) Usage() string {
 func (s *serveCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&s.uploadToken, "upload-token", "", "The Bearer token used to authenticate requests to the upload endpoint.")
 	f.IntVar(&s.autoPurge, "auto-purge", 0, "The number of days to keep data for. If 0 (or not set), data will not be purged.")
-	f.StringVar(&s.dbType, "db", "sqlite", "The type of database to use. Valid values are 'sqlite', 'mysql', and 'mongodb'.")
+	f.StringVar(&s.dbType, "db", dataaccess.DbSqlite.String(), "The type of database to use. Valid values are 'sqlite', 'mysql', and 'mongodb'.")
 	f.BoolVar(&s.gcs, "gcs", false, "Whether to use Google Cloud Storage.")
 	f.StringVar(&s.gcsBucket, "gcs-bucket", "", "The name of the Google Cloud Storage bucket to use. (Only used if gcs is enabled.)")
 }
 
-func (s *serveCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	if err := setupLogging(); err != nil {
 		fmt.Println("Error setting up logging:", err)
 		return subcommands.ExitFailure
+	}
+	s.dbType = strings.TrimSpace(s.dbType)
+	s.dbType = strings.ToUpper(s.dbType)
+	if !dataaccess.DbOpt(s.dbType).Valid() {
+		slog.Error("Invalid database option", slog.String("dbType", s.dbType))
+		f.Usage()
+		return subcommands.ExitUsageError
 	}
 
 	r := mux.NewRouter()
@@ -75,11 +83,19 @@ func (s *serveCmd) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{
 		Handler: r,
 	}
 
-	go func() {
+	// Set up the purge routine
+	if s.autoPurge != 0 {
+		if err := setupPurge(s.autoPurge); err != nil {
+			slog.Error("Error setting up purge routine", slog.String(logging.KeyError, err.Error()))
+		}
+	}
+
+	// Start the server in a goroutine so we can listen for the context to be done.
+	go func(srv *http.Server) {
 		if err := srv.ListenAndServe(); err != nil {
 			slog.Error("Error serving requests", slog.String(logging.KeyError, err.Error()))
 		}
-	}()
+	}(srv)
 
 	<-ctx.Done()
 	slog.Debug("Shutting down application")

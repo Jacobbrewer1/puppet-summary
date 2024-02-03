@@ -48,17 +48,17 @@ func ConnectDatabase(ctx context.Context, dbType string) error {
 	dbType = strings.TrimSpace(dbType)
 	dbType = strings.ToUpper(dbType)
 
-	opt := dbOpt(dbType)
+	opt := DbOpt(dbType)
 	if !opt.Valid() {
 		panic("Invalid database option")
 	}
 
 	switch opt {
-	case dbMongo:
+	case DbMongo:
 		connectMongoDB(ctx)
-	case dbMySQL:
+	case DbMySQL:
 		connectMysql()
-	case dbSqlite:
+	case DbSqlite:
 		connectSQLite()
 	default:
 		return fmt.Errorf("invalid database option, %s", dbType)
