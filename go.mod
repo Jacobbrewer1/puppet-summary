@@ -8,7 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/google/subcommands v1.2.0
 	github.com/gorilla/mux v1.8.1
-	github.com/mattn/go-sqlite3 v1.14.20
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/prometheus/client_golang v1.18.0
 	github.com/robfig/cron v1.2.0
 	github.com/smallfish/simpleyaml v0.1.0
