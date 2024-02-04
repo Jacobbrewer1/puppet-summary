@@ -19,7 +19,6 @@ import (
 
 const (
 	envGCSCredentials = "GCS_CREDENTIALS"
-	envGCSBucket      = "GCS_BUCKET"
 )
 
 var GCS Storage
