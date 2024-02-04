@@ -14,14 +14,14 @@ PR-approval:
 	go test ./...
 ci: docker
 	# Push the image to the registry
-	docker push $(registry):$(hash)
+	docker push $(registry):$(hash) && docker push $(registry):latest
 linux: clean
 	@echo "Building for linux"
 	GOOS=linux GOARCH=amd64 go build -o bin/app -ldflags '-X main.Commit=$(hash) -X main.Date=$(DATE)'
 docker: linux
 	@echo "Building docker image"
 	# Build the docker image
-	docker build -t $(registry):$(hash) .
+	docker build -t $(registry):$(hash) -t $(registry):latest .
 clean:
 	@echo "Cleaning up"
 	# Remove the bin directory
