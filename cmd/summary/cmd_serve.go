@@ -26,11 +26,8 @@ type serveCmd struct {
 	// dbType is the type of database to use.
 	dbType string
 
-	// gcs is whether to use Google Cloud Storage.
-	gcs bool
-
-	// gcsBucket is the name of the Google Cloud Storage bucket to use. (Only used if gcs is true.)
-	gcsBucket string
+	// gcs is the name of the Google Cloud Storage bucket to use. Setting this will enable GCS.
+	gcs string
 }
 
 func (s *serveCmd) Name() string {
@@ -51,8 +48,7 @@ func (s *serveCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&s.uploadToken, "upload-token", "", "The Bearer token used to authenticate requests to the upload endpoint.")
 	f.IntVar(&s.autoPurge, "auto-purge", 0, "The number of days to keep data for. If 0 (or not set), data will not be purged.")
 	f.StringVar(&s.dbType, "db", dataaccess.DbSqlite.String(), "The type of database to use. Valid values are 'sqlite', 'mysql', and 'mongodb'.")
-	f.BoolVar(&s.gcs, "gcs", false, "Whether to use Google Cloud Storage.")
-	f.StringVar(&s.gcsBucket, "gcs-bucket", "", "The name of the Google Cloud Storage bucket to use. (Only used if gcs is enabled.)")
+	f.StringVar(&s.gcs, "gcs", "", "The name of the Google Cloud Storage bucket to use. (Setting this will enable GCS)")
 }
 
 func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
@@ -112,9 +108,9 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %w", err)
 	}
-	if s.gcs {
+	if s.gcs != "" {
 		dataaccess.GCSEnabled = true
-		err = dataaccess.ConnectGCS(s.gcsBucket)
+		err = dataaccess.ConnectGCS(s.gcs)
 		if err != nil {
 			return fmt.Errorf("error connecting to GCS: %w", err)
 		}
