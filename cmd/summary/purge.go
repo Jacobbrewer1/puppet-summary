@@ -39,6 +39,7 @@ func purgeData(purgeDays int) {
 	err := dataaccess.Purge(entities.Datetime(from))
 	if err != nil {
 		slog.Error("Error purging data", slog.String(logging.KeyError, err.Error()))
+		return
 	}
 
 	slog.Info("Purging complete")
