@@ -451,7 +451,7 @@ func (m *mysqlImpl) SaveRun(ctx context.Context, run *entities.PuppetReport) err
 		run.Fqdn,
 		run.Env,
 		run.State,
-		"", // TODO: When GCS is implemented, this will need to be updated to use the yaml file.
+		"", // TODO: When Files is implemented, this will need to be updated to use the yaml file.
 		run.ExecTime.Time().Format(time.DateTime),
 		run.Runtime.String(),
 		run.Failed,

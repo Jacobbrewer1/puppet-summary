@@ -21,12 +21,12 @@ func Purge(from entities.Datetime) error {
 		slog.Debug("Data purged from database", slog.Int("affected", affected))
 	}
 
-	// Purge the data from GCS out of the given range.
-	affected, err = GCS.Purge(ctx, from)
+	// Purge the data from Files out of the given range.
+	affected, err = Files.Purge(ctx, from)
 	if err != nil {
 		return fmt.Errorf("error purging data: %w", err)
 	} else {
-		slog.Debug("Data purged from GCS", slog.Int("affected", affected))
+		slog.Debug("Data purged from Files", slog.Int("affected", affected))
 	}
 	return nil
 }

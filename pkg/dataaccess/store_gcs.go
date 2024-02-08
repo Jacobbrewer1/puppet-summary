@@ -21,23 +21,7 @@ const (
 	envGCSCredentials = "GCS_CREDENTIALS"
 )
 
-var GCS Storage
-
-type Storage interface {
-	// SaveFile uploads a file to the storage bucket. This will replace any existing file with the same name.
-	SaveFile(ctx context.Context, filePath string, file []byte) error
-
-	// DownloadFile downloads a file from the storage bucket.
-	DownloadFile(ctx context.Context, filePath string) ([]byte, error)
-
-	// DeleteFile deletes a file from the storage bucket.
-	DeleteFile(ctx context.Context, filePath string) error
-
-	// Purge purges the data from the storage bucket out of the given range.
-	Purge(ctx context.Context, from entities.Datetime) (int, error)
-}
-
-type storageImpl struct {
+type gcsImpl struct {
 	// gcs is the Google Cloud Storage client.
 	gcs *storage.Client
 
@@ -45,21 +29,16 @@ type storageImpl struct {
 	bucket string
 }
 
-func newStorage(gcs *storage.Client, bucket string) Storage {
-	return &storageImpl{
+func newGCS(gcs *storage.Client, bucket string) Storage {
+	return &gcsImpl{
 		gcs:    gcs,
 		bucket: bucket,
 	}
 }
 
-func (s *storageImpl) SaveFile(ctx context.Context, filePath string, file []byte) error {
-	if !GCSEnabled {
-		// GCS is not enabled, so do nothing.
-		return nil
-	}
-
+func (s *gcsImpl) SaveFile(ctx context.Context, filePath string, file []byte) error {
 	// Start the prometheus timer.
-	t := prometheus.NewTimer(GCSLatency.With(prometheus.Labels{"query": "save_file"}))
+	t := prometheus.NewTimer(StorageLatency.With(prometheus.Labels{"query": "save_file"}))
 	defer t.ObserveDuration()
 
 	// Connect to the bucket.
@@ -83,14 +62,9 @@ func (s *storageImpl) SaveFile(ctx context.Context, filePath string, file []byte
 	return nil
 }
 
-func (s *storageImpl) DownloadFile(ctx context.Context, filePath string) ([]byte, error) {
-	if !GCSEnabled {
-		// GCS is not enabled, so do nothing.
-		return nil, nil
-	}
-
+func (s *gcsImpl) DownloadFile(ctx context.Context, filePath string) ([]byte, error) {
 	// Start the prometheus timer.
-	t := prometheus.NewTimer(GCSLatency.With(prometheus.Labels{"query": "download_file"}))
+	t := prometheus.NewTimer(StorageLatency.With(prometheus.Labels{"query": "download_file"}))
 	defer t.ObserveDuration()
 
 	// Connect to the bucket.
@@ -117,14 +91,9 @@ func (s *storageImpl) DownloadFile(ctx context.Context, filePath string) ([]byte
 	return file, nil
 }
 
-func (s *storageImpl) DeleteFile(ctx context.Context, filePath string) error {
-	if !GCSEnabled {
-		// GCS is not enabled, so do nothing.
-		return nil
-	}
-
+func (s *gcsImpl) DeleteFile(ctx context.Context, filePath string) error {
 	// Start the prometheus timer.
-	t := prometheus.NewTimer(GCSLatency.With(prometheus.Labels{"query": "delete_file"}))
+	t := prometheus.NewTimer(StorageLatency.With(prometheus.Labels{"query": "delete_file"}))
 	defer t.ObserveDuration()
 
 	// Connect to the bucket.
@@ -139,14 +108,9 @@ func (s *storageImpl) DeleteFile(ctx context.Context, filePath string) error {
 	return nil
 }
 
-func (s *storageImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
-	if !GCSEnabled {
-		// GCS is not enabled, so do nothing.
-		return 0, nil
-	}
-
+func (s *gcsImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
 	// Start the prometheus timer.
-	t := prometheus.NewTimer(GCSLatency.With(prometheus.Labels{"query": "purge"}))
+	t := prometheus.NewTimer(StorageLatency.With(prometheus.Labels{"query": "purge"}))
 	defer t.ObserveDuration()
 
 	// Connect to the bucket.
@@ -204,39 +168,29 @@ func (s *storageImpl) Purge(ctx context.Context, from entities.Datetime) (int, e
 	return count, nil
 }
 
-func ConnectGCS(gcsBucket string) error {
-	if !GCSEnabled {
-		// GCS is not enabled, so do nothing.
-		// Set the GCS variable to an empty storage implementation to prevent nil pointer errors.
-		slog.Debug("GCS is not enabled, skipping connection")
-		GCS = newStorage(nil, "")
-		return nil
-	}
-
+func connectGCS(ctx context.Context, gcsBucket string) error {
 	// Get the service account credentials from the environment variable.
 	gcsCredentials := os.Getenv(envGCSCredentials)
 	if gcsCredentials == "" {
-		return errors.New("no GCS credentials provided")
+		return errors.New("no Files credentials provided")
 	}
-
-	ctx := context.Background()
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(gcsCredentials)))
 	if err != nil {
-		return fmt.Errorf("error connecting to GCS: %w", err)
+		return fmt.Errorf("error connecting to Files: %w", err)
 	}
 	cs := client
 
 	// Get the bucket name from the environment variable and validate that it exists.
 	if gcsBucket == "" {
-		return errors.New("no GCS bucket provided")
+		return errors.New("no Files bucket provided")
 	}
 
 	_, err = cs.Bucket(gcsBucket).Attrs(ctx)
 	if err != nil {
-		return fmt.Errorf("error validating GCS bucket: %w", err)
+		return fmt.Errorf("error validating Files bucket: %w", err)
 	}
 
-	GCS = newStorage(cs, gcsBucket)
+	Files = newGCS(cs, gcsBucket)
 	slog.Debug("Connected to GCS")
 	return nil
 }

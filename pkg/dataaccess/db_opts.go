@@ -33,5 +33,3 @@ func (d DbOpt) Valid() bool {
 		DbMongo,
 	)
 }
-
-var GCSEnabled = false

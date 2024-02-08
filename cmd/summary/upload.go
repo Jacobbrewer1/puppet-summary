@@ -56,10 +56,10 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	// Generate the file path.
 	rep.ReportFilePath()
 
-	// Save the file to GCS.
-	err = dataaccess.GCS.SaveFile(r.Context(), rep.YamlFile, bdy)
+	// Save the file to Files.
+	err = dataaccess.Files.SaveFile(r.Context(), rep.YamlFile, bdy)
 	if err != nil {
-		slog.Error("Error saving file to GCS", slog.String(logging.KeyError, err.Error()))
+		slog.Error("Error saving file to Files", slog.String(logging.KeyError, err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrInternalServer)); err != nil {
 			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
