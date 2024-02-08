@@ -15,6 +15,9 @@ data retention on a more reliable database.
 There are multiple ways to run the application. You can either run the application directly on your host or you can
 run the application within a Docker container. The application will listen on port `8080` by default.
 
+When running teh application, the app will default to using the local filesystem to store the raw reports, the default
+database is SQLite. These can be changed by using the flags that are available (Listed below).
+
 ### Commands
 
 The application has the following commands:
@@ -22,7 +25,7 @@ The application has the following commands:
 #### Serve
 
 The `serve` command will start the application and listen on port `8080`. This is the primary command that you will
-use to run the application. 
+use to run the application.
 
 You can view the help for this command by running:
 
@@ -84,6 +87,10 @@ the `GCS_CREDENTIALS` environment variable with the contents of the JSON credent
 ```text
 GCS_CREDENTIALS=<json-contents>
 ```
+
+#### S3 Storage
+
+_Coming soon_
 
 #### Secure Upload
 
