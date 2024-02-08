@@ -169,8 +169,8 @@ func (s *storageImpl) Purge(ctx context.Context, from entities.Datetime) (int, e
 		// Get the file name.
 		fileName := attrs.Name
 
-		// Ignore JSON files.
-		if strings.HasSuffix(fileName, ".json") {
+		// Ignore non-yaml files.
+		if !strings.HasSuffix(fileName, ".yaml") {
 			continue
 		}
 
@@ -195,7 +195,7 @@ func (s *storageImpl) Purge(ctx context.Context, from entities.Datetime) (int, e
 		// Delete the file.
 		err = bkt.Object(attrs.Name).Delete(ctx)
 		if err != nil {
-			return 0, fmt.Errorf("error deleting file: %w", err)
+			return 0, fmt.Errorf("error deleting file %s: %w", attrs.Name, err)
 		}
 
 		count++
