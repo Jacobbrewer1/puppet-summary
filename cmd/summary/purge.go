@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"log/slog"
 	"time"
 
@@ -37,7 +38,7 @@ func purgeData(purgeDays int) {
 
 	err := dataaccess.Purge(entities.Datetime(from))
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error purging data: %s", err))
+		slog.Error("Error purging data", slog.String(logging.KeyError, err.Error()))
 	}
 
 	slog.Info("Purging complete")
