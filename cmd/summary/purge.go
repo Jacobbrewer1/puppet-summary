@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"log/slog"
 	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/robfig/cron"
 )
 
