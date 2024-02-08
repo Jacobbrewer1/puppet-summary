@@ -59,8 +59,8 @@ func reportIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the Yaml report from GCS.
-	file, err := dataaccess.GCS.DownloadFile(r.Context(), rep.ReportFilePath())
+	// Get the Yaml report from Files.
+	file, err := dataaccess.Files.DownloadFile(r.Context(), rep.ReportFilePath())
 	if err != nil {
 		slog.Error("Error downloading yaml file", slog.String(logging.KeyError, err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)

@@ -14,11 +14,11 @@ var DatabaseLatency = promauto.NewHistogramVec(
 	[]string{"query"},
 )
 
-// GCSLatency is the duration of GCS queries.
-var GCSLatency = promauto.NewHistogramVec(
+// StorageLatency is the duration of Files queries.
+var StorageLatency = promauto.NewHistogramVec(
 	prometheus.HistogramOpts{
-		Name: "gcs_latency",
-		Help: "Duration of GCS queries",
+		Name: "storage_latency",
+		Help: "Duration of storage queries",
 	},
 	[]string{"query"},
 )

@@ -109,10 +109,14 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 		return fmt.Errorf("error connecting to database: %w", err)
 	}
 	if s.gcs != "" {
-		dataaccess.GCSEnabled = true
-		err = dataaccess.ConnectGCS(s.gcs)
+		err = dataaccess.ConnectStorage(ctx, dataaccess.StoreTypeGCS, s.gcs)
 		if err != nil {
-			return fmt.Errorf("error connecting to GCS: %w", err)
+			return fmt.Errorf("error connecting to Files: %w", err)
+		}
+	} else {
+		err = dataaccess.ConnectStorage(ctx, dataaccess.StoreTypeLocal, "")
+		if err != nil {
+			return fmt.Errorf("error connecting to local storage: %w", err)
 		}
 	}
 	if s.uploadToken != "" {
