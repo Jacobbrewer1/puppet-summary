@@ -51,7 +51,7 @@ func (s *sqliteImpl) Close(_ context.Context) error {
 	return s.client.Close()
 }
 
-func (s *sqliteImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
+func (s *sqliteImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 	sqlStmt := `
 	DELETE FROM reports
 	WHERE executed_at < ?;
@@ -66,7 +66,7 @@ func (s *sqliteImpl) Purge(ctx context.Context, from entities.Datetime) (int, er
 		return 0, fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	res, err := stmt.ExecContext(ctx, from.Time().Format(time.DateTime))
+	res, err := stmt.ExecContext(ctx, from.Format(time.DateTime))
 	if err != nil {
 		return 0, fmt.Errorf("error executing statement: %w", err)
 	}
@@ -453,7 +453,7 @@ func (s *sqliteImpl) SaveRun(ctx context.Context, run *entities.PuppetReport) er
 		run.Fqdn,
 		run.Env,
 		run.State,
-		"", // TODO: When Files is implemented, this will need to be updated to use the yaml file.
+		run.ReportFilePath(),
 		run.ExecTime.Time().Format(time.DateTime),
 		run.Runtime.String(),
 		run.Failed,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 )
@@ -41,7 +42,7 @@ type Database interface {
 	GetEnvironments(ctx context.Context) ([]entities.Environment, error)
 
 	// Purge purges the data from the database out of the given range.
-	Purge(ctx context.Context, from entities.Datetime) (int, error)
+	Purge(ctx context.Context, from time.Time) (int, error)
 }
 
 func ConnectDatabase(ctx context.Context, dbType string) error {
