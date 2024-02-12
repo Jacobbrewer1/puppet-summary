@@ -51,7 +51,7 @@ func (s *sqliteImpl) Close(_ context.Context) error {
 	return s.client.Close()
 }
 
-func (s *sqliteImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
+func (s *sqliteImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 	sqlStmt := `
 	DELETE FROM reports
 	WHERE executed_at < ?;
@@ -66,7 +66,7 @@ func (s *sqliteImpl) Purge(ctx context.Context, from entities.Datetime) (int, er
 		return 0, fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	res, err := stmt.ExecContext(ctx, from.Time().Format(time.DateTime))
+	res, err := stmt.ExecContext(ctx, from.Format(time.DateTime))
 	if err != nil {
 		return 0, fmt.Errorf("error executing statement: %w", err)
 	}

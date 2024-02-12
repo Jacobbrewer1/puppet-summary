@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -108,7 +107,7 @@ func (s *gcsImpl) DeleteFile(ctx context.Context, filePath string) error {
 	return nil
 }
 
-func (s *gcsImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
+func (s *gcsImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 	// Start the prometheus timer.
 	t := prometheus.NewTimer(StorageLatency.With(prometheus.Labels{"query": "purge"}))
 	defer t.ObserveDuration()
@@ -152,7 +151,7 @@ func (s *gcsImpl) Purge(ctx context.Context, from entities.Datetime) (int, error
 		}
 
 		// Check if the file date is before the purge date.
-		if fileDate.After(time.Time(from)) {
+		if fileDate.After(from) {
 			continue
 		}
 

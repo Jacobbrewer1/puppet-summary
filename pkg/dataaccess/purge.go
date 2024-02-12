@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
-
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 )
 
-func Purge(from entities.Datetime) error {
+func Purge(from time.Time) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 

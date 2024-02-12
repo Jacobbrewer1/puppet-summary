@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/robfig/cron"
 )
@@ -36,7 +35,7 @@ func purgeData(purgeDays int) {
 	now := time.Now()
 	from := now.AddDate(0, 0, -purgeDays)
 
-	err := dataaccess.Purge(entities.Datetime(from))
+	err := dataaccess.Purge(from)
 	if err != nil {
 		slog.Error("Error purging data", slog.String(logging.KeyError, err.Error()))
 		return

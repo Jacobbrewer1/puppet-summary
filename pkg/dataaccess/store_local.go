@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -119,7 +118,7 @@ func (l *localImpl) DeleteFile(_ context.Context, filePath string) error {
 	return nil
 }
 
-func (l *localImpl) Purge(_ context.Context, from entities.Datetime) (int, error) {
+func (l *localImpl) Purge(_ context.Context, from time.Time) (int, error) {
 	// Start the prometheus timer.
 	t := prometheus.NewTimer(StorageLatency.With(prometheus.Labels{"query": "purge"}))
 	defer t.ObserveDuration()
@@ -176,7 +175,7 @@ func (l *localImpl) Purge(_ context.Context, from entities.Datetime) (int, error
 				}
 
 				// Check if the file is older than the purge date.
-				if timestamp.After(time.Time(from)) {
+				if timestamp.After(from) {
 					continue
 				}
 

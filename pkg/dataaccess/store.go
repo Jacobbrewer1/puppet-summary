@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"time"
 )
 
 var Files Storage
@@ -21,7 +20,7 @@ type Storage interface {
 	DeleteFile(ctx context.Context, filePath string) error
 
 	// Purge purges the data from the storage bucket out of the given range.
-	Purge(ctx context.Context, from entities.Datetime) (int, error)
+	Purge(ctx context.Context, from time.Time) (int, error)
 }
 
 func ConnectStorage(ctx context.Context, storeType StoreType, bucketName string) error {

@@ -68,7 +68,7 @@ func (m *mongodbImpl) Close(ctx context.Context) error {
 	return m.client.Disconnect(ctx)
 }
 
-func (m *mongodbImpl) Purge(ctx context.Context, from entities.Datetime) (int, error) {
+func (m *mongodbImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
 	// Start the prometheus metrics.
