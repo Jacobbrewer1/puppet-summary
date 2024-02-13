@@ -25,7 +25,7 @@ func connectMongoDB(ctx context.Context) {
 		slog.Debug("Found MongoDB URI in environment")
 	} else {
 		// Missing environment variable.
-		slog.Error("No MongoDB URI provided in environment")
+		slog.Error(fmt.Sprintf("No %s environment variable provided", envDbConnStr))
 		os.Exit(1)
 	}
 
