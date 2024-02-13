@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"runtime"
 	"strings"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
@@ -72,12 +73,15 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 	}
 	s.setupRoutes(r)
 
-	slog.Debug("Starting application")
-
-	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: r,
-	}
+	slog.Info(
+		"Starting application",
+		slog.String("dbType", s.dbType),
+		slog.String("gcs", s.gcs),
+		slog.Int("autoPurge", s.autoPurge),
+		slog.String("commit", Commit),
+		slog.String("runtime", fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)),
+		slog.String("date", Date),
+	)
 
 	// Set up the purge routine
 	if s.autoPurge != 0 {
@@ -86,6 +90,11 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		}
 	} else {
 		slog.Debug("Auto purge not set, data will not be purged")
+	}
+
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
 	}
 
 	// Start the server in a goroutine, so we can listen for the context to be done.
