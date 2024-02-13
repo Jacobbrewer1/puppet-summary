@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -99,7 +100,10 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 
 	// Start the server in a goroutine, so we can listen for the context to be done.
 	go func(srv *http.Server) {
-		if err := srv.ListenAndServe(); err != nil {
+		err := srv.ListenAndServe()
+		if errors.Is(err, http.ErrServerClosed) {
+			slog.Debug("Server closed gracefully")
+		} else if err != nil {
 			slog.Error("Error serving requests", slog.String(logging.KeyError, err.Error()))
 		}
 	}(srv)

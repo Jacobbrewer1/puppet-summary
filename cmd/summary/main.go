@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/google/subcommands"
 )
@@ -24,6 +27,18 @@ func main() {
 	subcommands.Register(new(purgeCmd), "")
 
 	flag.Parse()
-	ctx := context.Background()
+
+	// Listen for ctrl+c and kill signals
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+		got := <-sig
+		slog.Debug("Received signal, shutting down", slog.String("signal", got.String()))
+		cancel()
+	}()
+
 	os.Exit(int(subcommands.Execute(ctx)))
 }
