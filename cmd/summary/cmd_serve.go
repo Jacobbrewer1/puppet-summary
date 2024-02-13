@@ -84,9 +84,11 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		if err := setupPurge(s.autoPurge); err != nil {
 			slog.Error("Error setting up purge routine", slog.String(logging.KeyError, err.Error()))
 		}
+	} else {
+		slog.Debug("Auto purge not set, data will not be purged")
 	}
 
-	// Start the server in a goroutine so we can listen for the context to be done.
+	// Start the server in a goroutine, so we can listen for the context to be done.
 	go func(srv *http.Server) {
 		if err := srv.ListenAndServe(); err != nil {
 			slog.Error("Error serving requests", slog.String(logging.KeyError, err.Error()))

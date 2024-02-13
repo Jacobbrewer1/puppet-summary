@@ -11,11 +11,6 @@ import (
 )
 
 func setupPurge(purgeDays int) error {
-	if purgeDays == 0 {
-		slog.Info("Auto purge not set, data will not be purged")
-		return nil
-	}
-
 	c := cron.New()
 
 	// Add a new entry to the cron scheduler to purge every (autoPurge) days at 03:00.
