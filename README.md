@@ -77,10 +77,10 @@ DB_CONN_STR="mongodb+srv://user:password@host/?retryWrites=true"
 #### Google Cloud Storage
 
 ```shell
-./puppet-summary -gcs -gcs-bucket <bucket>
+./puppet-summary -gcs <bucket>
 ```
 
-This will enable the `/upload` endpoint to push the raw reports from Puppet to Google Cloud Storage. For this, you will
+This will allow the `/upload` endpoint to push the raw reports from Puppet to Google Cloud Storage. For this, you will
 be required to specify a `gcs-bucket` flag with the name of the bucket to upload to; you will also need
 the `GCS_CREDENTIALS` environment variable with the contents of the JSON credentials file. For example:
 
