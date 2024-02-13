@@ -43,6 +43,7 @@ func purgeData(purgeDays int) {
 	// Get the start and end dates for the purge.
 	now := time.Now()
 	from := now.AddDate(0, 0, -purgeDays)
+	from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
 
 	err := dataaccess.Purge(from)
 	if err != nil {
