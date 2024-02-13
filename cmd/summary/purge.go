@@ -11,11 +11,6 @@ import (
 )
 
 func setupPurge(purgeDays int) error {
-	if purgeDays == 0 {
-		slog.Info("Auto purge not set, data will not be purged")
-		return nil
-	}
-
 	c := cron.New()
 
 	// Add a new entry to the cron scheduler to purge every (autoPurge) days at 03:00.
@@ -30,6 +25,20 @@ func setupPurge(purgeDays int) error {
 
 func purgeData(purgeDays int) {
 	slog.Info("Purging data")
+
+	if purgeDays == 0 {
+		slog.Warn("Purge days not set, will not purge any data")
+		return
+	} else if purgeDays < 0 {
+		// If the purgeDays is <= 0, purge all data.
+		slog.Info("Purge days set to 0, purging all data")
+		err := dataaccess.PurgeAll()
+		if err != nil {
+			slog.Error("Error purging data", slog.String(logging.KeyError, err.Error()))
+			return
+		}
+		return
+	}
 
 	// Get the start and end dates for the purge.
 	now := time.Now()
