@@ -14,7 +14,7 @@ func setupPurge(purgeDays int) error {
 	c := cron.New()
 
 	// Add a new entry to the cron scheduler to purge every (autoPurge) days at 03:00.
-	if err := c.AddFunc(fmt.Sprintf("0 3 */%d * *", purgeDays), func() { purgeData(purgeDays) }); err != nil {
+	if err := c.AddFunc("0 3 * * *", func() { purgeData(purgeDays) }); err != nil {
 		return fmt.Errorf("error adding purge job to cron scheduler: %w", err)
 	}
 
