@@ -19,7 +19,7 @@ func setupPurge(purgeDays int) error {
 	}
 
 	c.Start()
-	slog.Debug("Cron scheduler started")
+	slog.Info("Cron scheduler started")
 	return nil
 }
 

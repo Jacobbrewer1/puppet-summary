@@ -33,7 +33,7 @@ func healthHandler() Controller {
 			MaxTimeInError:     0,
 			MaxContiguousFails: 0,
 			StatusListener: func(ctx context.Context, name string, state health.CheckState) {
-				slog.Debug("Database health check status changed",
+				slog.Info("Database health check status changed",
 					slog.String("name", name),
 					slog.String("state", string(state.Status)),
 				)
