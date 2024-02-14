@@ -90,7 +90,7 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 			slog.Error("Error setting up purge routine", slog.String(logging.KeyError, err.Error()))
 		}
 	} else {
-		slog.Debug("Auto purge not set, data will not be purged")
+		slog.Info("Auto purge not set, data will not be purged")
 	}
 
 	srv := &http.Server{
@@ -102,14 +102,14 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 	go func(srv *http.Server) {
 		err := srv.ListenAndServe()
 		if errors.Is(err, http.ErrServerClosed) {
-			slog.Debug("Server closed gracefully")
+			slog.Info("Server closed gracefully")
 		} else if err != nil {
 			slog.Error("Error serving requests", slog.String(logging.KeyError, err.Error()))
 		}
 	}(srv)
 
 	<-ctx.Done()
-	slog.Debug("Shutting down application")
+	slog.Info("Shutting down application")
 	if err := srv.Shutdown(ctx); err != nil {
 		slog.Error("Error shutting down application", slog.String(logging.KeyError, err.Error()))
 		return subcommands.ExitFailure

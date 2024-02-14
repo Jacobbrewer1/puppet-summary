@@ -16,7 +16,7 @@ func Purge(from time.Time) error {
 	if err != nil {
 		return fmt.Errorf("error purging data: %w", err)
 	} else {
-		slog.Debug("Data purged from database", slog.Int("affected", affected))
+		slog.Info("Data purged from database", slog.Int("affected", affected))
 	}
 
 	// Purge the data from Files out of the given range.
@@ -24,7 +24,7 @@ func Purge(from time.Time) error {
 	if err != nil {
 		return fmt.Errorf("error purging data: %w", err)
 	} else {
-		slog.Debug("Data purged from Files", slog.Int("affected", affected))
+		slog.Info("Data purged from Files interface", slog.Int("affected", affected))
 	}
 	return nil
 }
@@ -44,7 +44,7 @@ func PurgeAll() error {
 	if err != nil {
 		return fmt.Errorf("error purging data: %w", err)
 	} else {
-		slog.Debug("Data purged from database", slog.Int("affected", affected))
+		slog.Info("Data purged from database", slog.Int("affected", affected))
 	}
 
 	// Purge the data from Files out of the given range.
@@ -52,7 +52,7 @@ func PurgeAll() error {
 	if err != nil {
 		return fmt.Errorf("error purging data: %w", err)
 	} else {
-		slog.Debug("Data purged from Files", slog.Int("affected", affected))
+		slog.Info("Data purged from Files interface", slog.Int("affected", affected))
 	}
 
 	return nil
