@@ -21,18 +21,18 @@ import (
 )
 
 func nodeFqdnHandler(w http.ResponseWriter, r *http.Request) {
-	nodeFqdn, ok := mux.Vars(r)["node_fqdn"]
+	nodeFqdn, ok := mux.Vars(r)["node_id"]
 	if !ok {
 		// Respond with 400 bad request.
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("No node fqdn provided")); err != nil {
+		if err := json.NewEncoder(w).Encode(request.NewMessage("No node id provided")); err != nil {
 			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	} else if nodeFqdn == "" {
 		// Respond with 400 bad request.
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("No node fqdn provided")); err != nil {
+		if err := json.NewEncoder(w).Encode(request.NewMessage("No node id provided")); err != nil {
 			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
