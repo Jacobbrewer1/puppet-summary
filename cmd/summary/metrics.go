@@ -34,13 +34,4 @@ var (
 		},
 		[]string{"path", "method", "status_code"},
 	)
-
-	// puppetVersion is the number of nodes running a specific version of puppet.
-	puppetVersion = promauto.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_puppet_version", appName),
-			Help: "Number of nodes running a specific version of puppet",
-		},
-		[]string{"version"},
-	)
 )
