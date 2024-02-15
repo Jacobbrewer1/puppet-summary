@@ -359,7 +359,6 @@ func parsePuppetReport(content []byte) (*entities.PuppetReport, error) {
 	if versionStr == "0.0" {
 		return nil, fmt.Errorf("failed to parse puppet_version: %w", err)
 	}
-	puppetVersion.WithLabelValues(versionStr).Inc()
 
 	err = parseEnvironment(yaml, rep)
 	if err != nil {
