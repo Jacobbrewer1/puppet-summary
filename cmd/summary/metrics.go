@@ -25,4 +25,22 @@ var (
 		},
 		[]string{"path", "method", "status_code"},
 	)
+
+	// httpRequestSize is the size of the http request.
+	httpRequestSize = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: fmt.Sprintf("%s_http_request_size", appName),
+			Help: "Size of the http request",
+		},
+		[]string{"path", "method", "status_code"},
+	)
+
+	// puppetVersion is the number of nodes running a specific version of puppet.
+	puppetVersion = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: fmt.Sprintf("%s_puppet_version", appName),
+			Help: "Number of nodes running a specific version of puppet",
+		},
+		[]string{"version"},
+	)
 )

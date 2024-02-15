@@ -307,7 +307,32 @@ func parseResults(y *simpleyaml.Yaml, out *entities.PuppetReport) error {
 	out.ResourcesOK = ok
 
 	return nil
+}
 
+func parsePuppetVersion(y *simpleyaml.Yaml, out *entities.PuppetReport) error {
+	version, err := y.Get("puppet_version").String()
+	if err != nil {
+		return errors.New("failed to get 'puppet_version' from YAML")
+	}
+
+	// Strip any quotes that might surround the version.
+	version = strings.Replace(version, "'", "", -1)
+
+	// Trim the version to 1 decimal place. (4.8.2 -> 4.8)
+	elms := strings.Split(version, ".")
+	if len(elms) > 2 {
+		version = elms[0] + "." + elms[1]
+	}
+
+	// Convert the version to a float.
+	v, err := strconv.ParseFloat(version, 64)
+	if err != nil {
+		return fmt.Errorf("failed to parse puppet_version '%s' as float", version)
+	}
+
+	out.PuppetVersion = v
+
+	return nil
 }
 
 // parsePuppetReport is our main function in this module. Given an
@@ -324,6 +349,17 @@ func parsePuppetReport(content []byte) (*entities.PuppetReport, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host: %w", err)
 	}
+
+	err = parsePuppetVersion(yaml, rep)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse puppet_version: %w", err)
+	}
+
+	versionStr := fmt.Sprintf("%f", rep.PuppetVersion)
+	if versionStr == "0.0" {
+		return nil, fmt.Errorf("failed to parse puppet_version: %w", err)
+	}
+	puppetVersion.WithLabelValues(versionStr).Inc()
 
 	err = parseEnvironment(yaml, rep)
 	if err != nil {

@@ -70,6 +70,9 @@ type PuppetReport struct {
 	// Fqdn of the node.
 	Fqdn string `json:"fqdn" bson:"fqdn"`
 
+	// PuppetVersion is the version of puppet used to generate the report.
+	PuppetVersion float64 `json:"puppet_version" bson:"puppet_version"`
+
 	// Env of the node.
 	Env Environment `json:"env" bson:"env"`
 
