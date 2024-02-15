@@ -31,16 +31,6 @@ const (
 
 func middlewareHttp(handler Controller, authOption AuthOption) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// We want to check if the auth type is internal, and if so, check if the request is internal. This is because
-		// the 404 will mess up the metrics.
-		if authOption == AuthOptionInternal && !request.IsInternal(r) {
-			// If the request is not internal, return a 404.
-			slog.Debug("Request is not internal", slog.String("remote_addr", r.RemoteAddr),
-				slog.String("headers", fmt.Sprintf("%+v", r.Header)))
-			request.NotFoundHandler().ServeHTTP(w, r)
-			return
-		}
-
 		now := time.Now().UTC()
 		cw := request.NewClientWriter(w)
 
@@ -73,8 +63,17 @@ func middlewareHttp(handler Controller, authOption AuthOption) http.HandlerFunc 
 		}
 
 		switch authOption {
-		case AuthOptionNone, AuthOptionInternal, AuthOptionRequired:
-			// Do nothing.
+		case AuthOptionNone, AuthOptionRequired:
+		// Do nothing.
+		case AuthOptionInternal:
+			// Check if the request is internal.
+			if !request.IsInternal(r) {
+				cw.WriteHeader(http.StatusUnauthorized)
+				if err := json.NewEncoder(cw).Encode(request.NewMessage(messages.ErrUnauthorized)); err != nil {
+					slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+				}
+				return
+			}
 		default:
 			slog.Error("Invalid auth option", slog.Int("auth_option", int(authOption)))
 			cw.WriteHeader(http.StatusInternalServerError)
@@ -85,9 +84,11 @@ func middlewareHttp(handler Controller, authOption AuthOption) http.HandlerFunc 
 
 		handler(cw, r)
 
-		// Record the request metrics.
-		httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
-		httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
-		httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
+		// Record the request metrics. Do not record metrics for the metrics or health endpoints as they are not user-facing.
+		if path != pathMetrics && path != pathHealth {
+			httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
+			httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
+			httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
+		}
 	}
 }
