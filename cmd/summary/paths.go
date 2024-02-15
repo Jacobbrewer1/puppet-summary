@@ -14,7 +14,7 @@ const (
 	pathUpload = "/upload"
 
 	pathNodes    = "/nodes"
-	pathNodeFqdn = pathNodes + "/{node_id}"
+	pathNodeFqdn = pathNodes + "/{node_fqdn}"
 	pathNodesEnv = pathNodes + "/environment/{env}"
 
 	pathReports  = "/reports"
