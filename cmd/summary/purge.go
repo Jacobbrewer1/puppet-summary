@@ -7,14 +7,21 @@ import (
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
-	"github.com/robfig/cron"
+	"github.com/robfig/cron/v3"
 )
 
 func setupPurge(purgeDays int) error {
-	c := cron.New()
+	c := cron.New(
+		cron.WithLocation(time.UTC),
+		cron.WithParser(
+			cron.NewParser(
+				cron.Minute|cron.Hour|cron.Dom|cron.Month|cron.Dow|cron.Descriptor,
+			),
+		),
+	)
 
-	// Add a new entry to the cron scheduler to purge every (autoPurge) days at 03:00.
-	if err := c.AddFunc("0 3 * * *", func() { purgeData(purgeDays) }); err != nil {
+	// Add a new entry to the cron scheduler to purge every day at 03:00.
+	if _, err := c.AddFunc("0 3 * * *", func() { purgeData(purgeDays) }); err != nil {
 		return fmt.Errorf("error adding purge job to cron scheduler: %w", err)
 	}
 

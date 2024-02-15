@@ -76,6 +76,7 @@ func middlewareHttp(handler Controller, authOption AuthOption) http.HandlerFunc 
 			// Run the deferred function after the request has been handled, as the status code will not be available until then.
 			httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
 			httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
+			httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
 		}()
 
 		switch authOption {
