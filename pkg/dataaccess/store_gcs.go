@@ -171,7 +171,7 @@ func connectGCS(ctx context.Context, gcsBucket string) error {
 	// Get the service account credentials from the environment variable.
 	gcsCredentials := os.Getenv(envGCSCredentials)
 	if gcsCredentials == "" {
-		return errors.New("no Files credentials provided")
+		return errors.New("no GCS credentials provided")
 	}
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(gcsCredentials)))
 	if err != nil {
@@ -181,12 +181,12 @@ func connectGCS(ctx context.Context, gcsBucket string) error {
 
 	// Get the bucket name from the environment variable and validate that it exists.
 	if gcsBucket == "" {
-		return errors.New("no Files bucket provided")
+		return errors.New("no GCS bucket provided")
 	}
 
 	_, err = cs.Bucket(gcsBucket).Attrs(ctx)
 	if err != nil {
-		return fmt.Errorf("error validating Files bucket: %w", err)
+		return fmt.Errorf("error validating GCS bucket: %w", err)
 	}
 
 	Files = newGCS(cs, gcsBucket)
