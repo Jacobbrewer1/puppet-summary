@@ -1,9 +1,10 @@
 package entities
 
 import (
-	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type historySuite struct {
@@ -33,49 +34,49 @@ func (s *historySuite) TearDownTest() {
 
 func (s *historySuite) TestAddChanged() {
 	s.history.AddCount(StateChanged, 7)
-	s.Equal(7, s.history.Changed)
-	s.Equal(0, s.history.Unchanged)
-	s.Equal(0, s.history.Failed)
+	s.Require().Equal(7, s.history.Changed)
+	s.Require().Equal(0, s.history.Unchanged)
+	s.Require().Equal(0, s.history.Failed)
 }
 
 func (s *historySuite) TestAddUnchanged() {
 	s.history.AddCount(StateUnchanged, 7)
-	s.Equal(7, s.history.Unchanged)
-	s.Equal(0, s.history.Changed)
-	s.Equal(0, s.history.Failed)
+	s.Require().Equal(7, s.history.Unchanged)
+	s.Require().Equal(0, s.history.Changed)
+	s.Require().Equal(0, s.history.Failed)
 }
 
 func (s *historySuite) TestAddFailed() {
 	s.history.AddCount(StateFailed, 7)
-	s.Equal(7, s.history.Failed)
-	s.Equal(0, s.history.Changed)
-	s.Equal(0, s.history.Unchanged)
+	s.Require().Equal(7, s.history.Failed)
+	s.Require().Equal(0, s.history.Changed)
+	s.Require().Equal(0, s.history.Unchanged)
 }
 
 func (s *historySuite) TestAddCount() {
 	s.history.AddCount(StateChanged, 7)
 	s.history.AddCount(StateUnchanged, 5)
 	s.history.AddCount(StateFailed, 3)
-	s.Equal(7, s.history.Changed)
-	s.Equal(5, s.history.Unchanged)
-	s.Equal(3, s.history.Failed)
+	s.Require().Equal(7, s.history.Changed)
+	s.Require().Equal(5, s.history.Unchanged)
+	s.Require().Equal(3, s.history.Failed)
 }
 
 func (s *historySuite) TestAddCountInvalidState() {
 	s.history.AddCount(State("invalid"), 7)
-	s.Equal(0, s.history.Changed)
-	s.Equal(0, s.history.Unchanged)
-	s.Equal(0, s.history.Failed)
+	s.Require().Equal(0, s.history.Changed)
+	s.Require().Equal(0, s.history.Unchanged)
+	s.Require().Equal(0, s.history.Failed)
 }
 
 func (s *historySuite) TestAddCountNegativeCount() {
 	s.history.AddCount(StateChanged, -7)
-	s.Equal(-7, s.history.Changed)
-	s.Equal(0, s.history.Unchanged)
-	s.Equal(0, s.history.Failed)
+	s.Require().Equal(-7, s.history.Changed)
+	s.Require().Equal(0, s.history.Unchanged)
+	s.Require().Equal(0, s.history.Failed)
 }
 
 func (s *historySuite) TestAddCountChanged() {
 	s.history.AddCount(StateChanged, 7)
-	s.Equal(7, s.history.Changed)
+	s.Require().Equal(7, s.history.Changed)
 }

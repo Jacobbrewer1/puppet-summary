@@ -17,30 +17,30 @@ func TestDurationSuite(t *testing.T) {
 
 func (s *durationSuite) TestString() {
 	d := Duration(0)
-	s.Equal("", d.String())
+	s.Require().Equal("", d.String())
 
 	d = Duration(1 * time.Second)
-	s.Equal("1s", d.String())
+	s.Require().Equal("1s", d.String())
 
 	d = Duration((12 * time.Second) + (3 * time.Minute) + (4 * time.Hour) + (5 * 24 * time.Hour))
-	s.Equal("124h3m12s", d.String())
+	s.Require().Equal("124h3m12s", d.String())
 }
 
 func (s *durationSuite) TestScan() {
 	d := Duration(0)
 	err := d.Scan("1s")
-	s.NoError(err)
-	s.Equal(Duration(1*time.Second), d)
+	s.Require().NoError(err)
+	s.Require().Equal(Duration(1*time.Second), d)
 
 	err = d.Scan("1m")
-	s.NoError(err)
-	s.Equal(Duration(1*time.Minute), d)
+	s.Require().NoError(err)
+	s.Require().Equal(Duration(1*time.Minute), d)
 
 	err = d.Scan("1h")
-	s.NoError(err)
-	s.Equal(Duration(1*time.Hour), d)
+	s.Require().NoError(err)
+	s.Require().Equal(Duration(1*time.Hour), d)
 
 	err = d.Scan("7h30m")
-	s.NoError(err)
-	s.Equal(Duration((7*time.Hour)+(30*time.Minute)), d)
+	s.Require().NoError(err)
+	s.Require().Equal(Duration((7*time.Hour)+(30*time.Minute)), d)
 }
