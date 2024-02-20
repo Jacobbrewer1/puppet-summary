@@ -10,16 +10,16 @@ import (
 var Files fileHandler
 
 type fileHandler interface {
-	// SaveFile uploads a file to the fileHandler bucket. This will replace any existing file with the same name.
+	// SaveFile uploads a file to storage. This will replace any existing file with the same name.
 	SaveFile(ctx context.Context, filePath string, file []byte) error
 
-	// DownloadFile downloads a file from the fileHandler bucket.
+	// DownloadFile downloads a file from storage.
 	DownloadFile(ctx context.Context, filePath string) ([]byte, error)
 
-	// DeleteFile deletes a file from the fileHandler bucket.
+	// DeleteFile deletes a file from storage.
 	DeleteFile(ctx context.Context, filePath string) error
 
-	// Purge purges the data from the fileHandler bucket out of the given range.
+	// Purge purges the data from storage out of the given range.
 	Purge(ctx context.Context, from time.Time) (int, error)
 }
 
