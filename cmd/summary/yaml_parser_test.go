@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/smallfish/simpleyaml"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/smallfish/simpleyaml"
 	"github.com/stretchr/testify/suite"
 )
 
