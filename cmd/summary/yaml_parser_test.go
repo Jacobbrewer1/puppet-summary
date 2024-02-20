@@ -38,7 +38,7 @@ func (s *ParsePuppetReportSuite) SetupTest() {
 		s.Require().DirExists(pwd, "Expected a data directory")
 	}
 
-	validYAMLFile := filepath.Join(pwd, "data/example.yaml")
+	validYAMLFile := filepath.Join(pwd, "testdata/example.yaml")
 	s.Require().FileExists(validYAMLFile, "Expected a valid YAML file")
 
 	s.yamlContent, err = os.ReadFile(validYAMLFile)
