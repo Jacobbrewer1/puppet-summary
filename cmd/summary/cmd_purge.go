@@ -40,7 +40,7 @@ func (p *purgeCmd) Usage() string {
 func (p *purgeCmd) SetFlags(f *flag.FlagSet) {
 	f.IntVar(&p.days, "days", 0, "The number of days to purge. 0 will not purge any data, <0 will purge all data.")
 	f.StringVar(&p.dbType, "db", dataaccess.DbSqlite.String(), "The type of database to connect to.")
-	f.StringVar(&p.gcs, "gcs", "", "The name of the Google Cloud Storage bucket to use. (Setting this will enable GCS)")
+	f.StringVar(&p.gcs, "gcs", "", "The name of the Google Cloud storage bucket to use. (Setting this will enable GCS)")
 }
 
 func (p *purgeCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {

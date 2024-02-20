@@ -11,9 +11,9 @@ import (
 
 const envDbConnStr = "DB_CONN_STR"
 
-var DB Database
+var DB database
 
-type Database interface {
+type database interface {
 	// Ping pings the database.
 	Ping(ctx context.Context) error
 

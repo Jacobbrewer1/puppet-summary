@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-var Files Storage
+var Files storage
 
-type Storage interface {
+type storage interface {
 	// SaveFile uploads a file to the storage bucket. This will replace any existing file with the same name.
 	SaveFile(ctx context.Context, filePath string, file []byte) error
 

@@ -21,14 +21,14 @@ const (
 )
 
 type gcsImpl struct {
-	// gcs is the Google Cloud Storage client.
+	// gcs is the Google Cloud storage client.
 	gcs *storage.Client
 
 	// bucket is the name of the bucket to use.
 	bucket string
 }
 
-func newGCS(gcs *storage.Client, bucket string) Storage {
+func newGCS(gcs *storage.Client, bucket string) storage {
 	return &gcsImpl{
 		gcs:    gcs,
 		bucket: bucket,

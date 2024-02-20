@@ -9,6 +9,6 @@ const (
 	// StoreTypeS3 is an S3 store
 	StoreTypeS3 StoreType = "S3"
 
-	// StoreTypeGCS is a Google Cloud Storage store
+	// StoreTypeGCS is a Google Cloud storage store
 	StoreTypeGCS StoreType = "GCS"
 )

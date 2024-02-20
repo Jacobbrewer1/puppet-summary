@@ -22,7 +22,7 @@ func healthHandler() Controller {
 
 		// Monitor the health of the database.
 		health.WithCheck(health.Check{
-			Name: "Database",
+			Name: "database",
 			Check: func(ctx context.Context) error {
 				if err := dataaccess.DB.Ping(ctx); err != nil {
 					return fmt.Errorf("failed to ping database: %w", err)
@@ -33,7 +33,7 @@ func healthHandler() Controller {
 			MaxTimeInError:     0,
 			MaxContiguousFails: 0,
 			StatusListener: func(ctx context.Context, name string, state health.CheckState) {
-				slog.Info("Database health check status changed",
+				slog.Info("database health check status changed",
 					slog.String("name", name),
 					slog.String("state", string(state.Status)),
 				)
