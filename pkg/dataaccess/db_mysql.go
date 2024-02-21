@@ -496,7 +496,7 @@ func (m *mysqlImpl) setup() error {
 CREATE TABLE IF NOT EXISTS reports
 (
     id          INTEGER PRIMARY KEY AUTO_INCREMENT,
-    hash        text UNIQUE,
+    hash        text NOT NULL UNIQUE,
     fqdn        text,
     environment text,
     state       text,
