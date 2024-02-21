@@ -3,13 +3,13 @@ package dataaccess
 import (
 	"context"
 	"database/sql"
-	"github.com/mattn/go-sqlite3"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/suite"
 )
 
