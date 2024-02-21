@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	cloud.google.com/go/storage v1.38.0
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/alexliesenfeld/health v0.8.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/google/subcommands v1.2.0

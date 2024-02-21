@@ -22,10 +22,7 @@ func connectSQLite() {
 		os.Exit(1)
 	}
 
-	l := slog.Default().With(slog.String(logging.KeyDal, "sqlite"))
-
 	impl := &sqliteImpl{
-		l:      l,
 		client: dbLite,
 	}
 
@@ -40,9 +37,6 @@ func connectSQLite() {
 }
 
 type sqliteImpl struct {
-	// l is the logger.
-	l *slog.Logger
-
 	// client is the database.
 	client *sql.DB
 }

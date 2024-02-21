@@ -46,10 +46,7 @@ func connectMongoDB(ctx context.Context) {
 		os.Exit(1)
 	}
 
-	l := slog.Default().With(slog.String(logging.KeyDal, "mongodb"))
-
 	DB = &mongodbImpl{
-		l:      l,
 		client: client,
 	}
 
@@ -57,9 +54,6 @@ func connectMongoDB(ctx context.Context) {
 }
 
 type mongodbImpl struct {
-	// l is the logger.
-	l *slog.Logger
-
 	// client is the database.
 	client *mongo.Client
 }
