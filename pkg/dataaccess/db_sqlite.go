@@ -22,10 +22,7 @@ func connectSQLite() {
 		os.Exit(1)
 	}
 
-	l := slog.Default().With(slog.String(logging.KeyDal, "sqlite"))
-
 	impl := &sqliteImpl{
-		l:      l,
 		client: dbLite,
 	}
 
@@ -40,9 +37,6 @@ func connectSQLite() {
 }
 
 type sqliteImpl struct {
-	// l is the logger.
-	l *slog.Logger
-
 	// client is the database.
 	client *sql.DB
 }
@@ -326,7 +320,7 @@ func (s *sqliteImpl) Ping(ctx context.Context) error {
 	return s.client.PingContext(ctx)
 }
 
-func (s *sqliteImpl) GetRunsByState(ctx context.Context, state entities.State) ([]*entities.PuppetRun, error) {
+func (s *sqliteImpl) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
 	sqlStmt := `
 	SELECT
 		hash,
@@ -348,7 +342,16 @@ func (s *sqliteImpl) GetRunsByState(ctx context.Context, state entities.State) (
 		return nil, fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	rows, err := stmt.QueryContext(ctx, state)
+	// Convert the states to a string csv.
+	statesStr := ""
+	for i, state := range states {
+		statesStr += state.String()
+		if i != len(states)-1 {
+			statesStr += ","
+		}
+	}
+
+	rows, err := stmt.QueryContext(ctx, statesStr)
 	if err != nil {
 		return nil, fmt.Errorf("error executing statement: %w", err)
 	}

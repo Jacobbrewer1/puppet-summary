@@ -31,10 +31,7 @@ func connectMysql() {
 		os.Exit(1)
 	}
 
-	l := slog.Default().With(slog.String(logging.KeyDal, "mysql"))
-
 	impl := &mysqlImpl{
-		l:      l,
 		client: d,
 	}
 
@@ -49,9 +46,6 @@ func connectMysql() {
 }
 
 type mysqlImpl struct {
-	// l is the logger.
-	l *slog.Logger
-
 	// client is the database.
 	client *sql.DB
 }
@@ -130,7 +124,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment entities.Environ
 
 	limit := 30
 
-	query := "SELECT DISTINCT DATE(executed_at) FROM reports"
+	query := "SELECT DISTINCT DATE(executed_at) FROM reports;"
 	if environment != entities.EnvAll {
 		query = fmt.Sprintf("%s WHERE environment = '%s'", query, environment)
 	}
@@ -193,7 +187,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment entities.Environ
 
 		locQuery := "SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ?"
 		if environment != entities.EnvAll {
-			locQuery += " AND environment = '" + environment.String() + "' "
+			locQuery += " AND environment = '" + environment.String() + "'"
 		}
 		locQuery += " GROUP BY state;"
 		stmt, err = m.client.PrepareContext(ctx, locQuery)
@@ -241,7 +235,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment entities.Environ
 
 func (m *mysqlImpl) GetReport(ctx context.Context, id string) (*entities.PuppetReport, error) {
 	sqlStmt := `
-SELECT id, 
+SELECT hash,
        fqdn,
        environment,
        state, 
@@ -267,8 +261,8 @@ WHERE hash = ?;
 	row := stmt.QueryRowContext(ctx, id)
 
 	report := new(entities.PuppetReport)
-	if err := row.Scan(&report.ID, &report.Fqdn, &report.Env, &report.State, &report.YamlFile, &report.ExecTime,
-		&report.Runtime, &report.Total, &report.Skipped, &report.Failed, &report.Changed); err != nil {
+	if err := row.Scan(&report.ID, &report.Fqdn, &report.Env, &report.State, &report.ExecTime, &report.Runtime,
+		&report.Failed, &report.Changed, &report.Total, &report.YamlFile); err != nil {
 		return nil, fmt.Errorf("error scanning rows: %w", err)
 	}
 
@@ -277,7 +271,7 @@ WHERE hash = ?;
 
 func (m *mysqlImpl) GetReports(ctx context.Context, fqdn string) ([]*entities.PuppetReportSummary, error) {
 	sqlStmt := `
-SELECT id, 
+SELECT hash, 
        fqdn,
        environment,
        state, 
@@ -314,8 +308,8 @@ ORDER by executed_at DESC;
 	reports := make([]*entities.PuppetReportSummary, 0)
 	for rows.Next() {
 		report := new(entities.PuppetReportSummary)
-		if err := rows.Scan(&report.ID, &report.Fqdn, &report.Env, &report.State, &report.YamlFile, &report.ExecTime,
-			&report.Runtime, &report.Total, &report.Skipped, &report.Failed, &report.Changed); err != nil {
+		if err := rows.Scan(&report.ID, &report.Fqdn, &report.Env, &report.State, &report.ExecTime, &report.Runtime,
+			&report.Failed, &report.Changed, &report.Total, &report.YamlFile); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
 		}
 		reports = append(reports, report)
@@ -324,14 +318,13 @@ ORDER by executed_at DESC;
 	return reports, nil
 }
 
-func (m *mysqlImpl) GetRunsByState(ctx context.Context, state entities.State) ([]*entities.PuppetRun, error) {
+func (m *mysqlImpl) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
 	sqlStmt := `
-	SELECT
-		hash,
-		fqdn,
-		state,
-		executed_at,
-		runtime
+	SELECT hash,
+		   fqdn,
+		   state,
+		   executed_at,
+		   runtime
 	FROM reports
 	WHERE state IN (?)
 	ORDER BY executed_at DESC;
@@ -346,7 +339,16 @@ func (m *mysqlImpl) GetRunsByState(ctx context.Context, state entities.State) ([
 		return nil, fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	rows, err := stmt.QueryContext(ctx, state)
+	// Convert the states to a string csv.
+	statesStr := ""
+	for i, state := range states {
+		statesStr += state.String()
+		if i != len(states)-1 {
+			statesStr += ","
+		}
+	}
+
+	rows, err := stmt.QueryContext(ctx, statesStr)
 	if err != nil {
 		return nil, fmt.Errorf("error executing statement: %w", err)
 	}
@@ -491,6 +493,7 @@ func (m *mysqlImpl) setup() error {
 CREATE TABLE IF NOT EXISTS reports
 (
     id          INTEGER PRIMARY KEY AUTO_INCREMENT,
+    hash        text UNIQUE,
     fqdn        text,
     environment text,
     state       text,

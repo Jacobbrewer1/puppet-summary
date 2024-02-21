@@ -1,0 +1,186 @@
+--- !ruby/object:Puppet::Transaction::Report
+host: example-host
+time: '2024-02-17T02:00:09.572734022+00:00'
+configuration_version: 1708135209
+transaction_uuid: ebdb4923-d612-4850-9093-fc1f1cc1dd64
+report_format: 12
+puppet_version: 8.4.0
+status: changed
+transaction_completed: true
+noop: false
+noop_pending: false
+environment: production
+logs:
+  - level: notice
+    message: "Testing if example-command1 is already installed"
+    source: "/Stage[main]/Default_config/Exec[example-command1]/returns"
+    tags:
+      - notice
+      - mysql_database
+      - example-db1
+      - class
+      - default_config
+      - node
+      - default
+    time: '2024-02-17T02:00:09.914512536+00:00'
+    file: "/path/to/manifests/init.pp"
+    line: 17
+  - level: notice
+    message: "executed successfully"
+    source: "/Stage[main]/Default_config/Exec[example-command2]/returns"
+    tags:
+      - notice
+      - exec
+      - example-command3
+      - class
+      - default_config
+      - node
+      - default
+    time: '2024-02-17T02:00:36.081956857+00:00'
+    file: "/path/to/config/manifests/init.pp"
+    line: 68
+  - level: notice
+    message: "Applied catalog in 26.67 seconds"
+    source: Puppet
+    tags:
+      - notice
+    time: '2024-02-17T02:00:36.247779551+00:00'
+    file:
+    line:
+metrics:
+  resources:
+    name: resources
+    label: Resources
+    values:
+      - - total
+        - Total
+        - 67
+      - - skipped
+        - Skipped
+        - 0
+      - - failed
+        - Failed
+        - 0
+      - - failed_to_restart
+        - Failed to restart
+        - 0
+      - - restarted
+        - Restarted
+        - 0
+      - - changed
+        - Changed
+        - 6
+      - - out_of_sync
+        - Out of sync
+        - 6
+      - - scheduled
+        - Scheduled
+        - 0
+      - - corrective_change
+        - Corrective change
+        - 0
+  time:
+    name: time
+    label: Time
+    values:
+      - - anchor
+        - Anchor
+        - 8.0641e-05
+      - - file
+        - File
+        - 0.0035544189999999996
+      - - exec
+        - Exec
+        - 26.105695294999997
+      - - package
+        - Package
+        - 0.000598492
+      - - cron
+        - Cron
+        - 0.001513222
+      - - group
+        - Group
+        - 0.000354368
+      - - user
+        - User
+        - 0.003896302
+      - - schedule
+        - Schedule
+        - 0.000206123
+      - - filebucket
+        - Filebucket
+        - 4.0462e-05
+      - - config_retrieval
+        - Config retrieval
+        - 0.43629771
+      - - transaction_evaluation
+        - Transaction evaluation
+        - 26.658325475174934
+      - - catalog_application
+        - Catalog application
+        - 26.669846358243376
+      - - total
+        - Total
+        - 26.67511224
+  changes:
+    name: changes
+    label: Changes
+    values:
+      - - total
+        - Total
+        - 9
+  events:
+    name: events
+    label: Events
+    values:
+      - - total
+        - Total
+        - 9
+      - - failure
+        - Failure
+        - 0
+      - - success
+        - Success
+        - 9
+resource_statuses:
+  Exec[example-command1]:
+    title: example-command1
+    file: "/path/to/config/manifests/init.pp"
+    line: 68
+    resource: Exec[example-command1]
+    resource_type: Exec
+    provider_used: posix
+    containment_path:
+      - Stage[main]
+      - Default_config
+      - Exec[example-command1]
+    evaluation_time: 4.031911376
+    tags:
+      - exec
+      - example-command1
+      - class
+      - default_config
+      - node
+      - default
+    time: '2024-02-17T02:00:32.050170033+00:00'
+    failed: false
+    failed_to_restart: false
+    changed: true
+    out_of_sync: true
+    skipped: false
+    change_count: 1
+    out_of_sync_count: 1
+    events:
+      - audited: false
+        property: returns
+        previous_value: notrun
+        desired_value:
+          - '0'
+        historical_value:
+        message: executed successfully
+        name: executed_command
+        status: success
+        time: '2024-02-17T02:00:32.050281456+00:00'
+        redacted:
+        corrective_change: false
+    corrective_change: false

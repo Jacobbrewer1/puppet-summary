@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	cloud.google.com/go/storage v1.38.0
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/alexliesenfeld/health v0.8.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/google/subcommands v1.2.0
@@ -45,6 +46,7 @@ require (
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

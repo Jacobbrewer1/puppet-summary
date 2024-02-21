@@ -212,7 +212,7 @@ func prettyDuration(d *entities.Duration) string {
 	}
 
 	// Get the duration as a string.
-	str := d.String()
+	str := d.PrettyString()
 
 	// Add a space between each unit.
 	str = strings.ReplaceAll(str, "d", "d ")

@@ -11,9 +11,9 @@ import (
 
 const envDbConnStr = "DB_CONN_STR"
 
-var DB Database
+var DB database
 
-type Database interface {
+type database interface {
 	// Ping pings the database.
 	Ping(ctx context.Context) error
 
@@ -27,7 +27,7 @@ type Database interface {
 	GetRuns(ctx context.Context) ([]*entities.PuppetRun, error)
 
 	// GetRunsByState returns all PuppetRuns from the database that are in the given state.
-	GetRunsByState(ctx context.Context, state entities.State) ([]*entities.PuppetRun, error)
+	GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error)
 
 	// GetReports returns all PuppetReports from the database for the given fqdn.
 	GetReports(ctx context.Context, fqdn string) ([]*entities.PuppetReportSummary, error)

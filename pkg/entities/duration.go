@@ -30,6 +30,30 @@ func (d *Duration) UnmarshalJSON(text []byte) error {
 
 // String returns the duration as a string.
 func (d Duration) String() string {
+	// Calulate the hours, minutes, and seconds.
+	t := time.Duration(d)
+	hours := t / time.Hour
+	t -= hours * time.Hour
+	minutes := t / time.Minute
+	t -= minutes * time.Minute
+	seconds := t / time.Second
+
+	// Build the string.
+	str := ""
+	if hours > 0 {
+		str += fmt.Sprintf("%dh", hours)
+	}
+	if minutes > 0 {
+		str += fmt.Sprintf("%dm", minutes)
+	}
+	if seconds > 0 {
+		str += fmt.Sprintf("%ds", seconds)
+	}
+	return str
+}
+
+// PrettyString returns the duration as a pretty string.
+func (d Duration) PrettyString() string {
 	// Calulate the days, hours, minutes, and seconds.
 	days := d.Time() / (time.Hour * 24)
 	hours := (d.Time() - (days * time.Hour * 24)) / time.Hour

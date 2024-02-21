@@ -18,7 +18,7 @@ var DatabaseLatency = promauto.NewHistogramVec(
 var StorageLatency = promauto.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Name: "storage_latency",
-		Help: "Duration of storage queries",
+		Help: "Duration of fileHandler queries",
 	},
 	[]string{"query"},
 )
