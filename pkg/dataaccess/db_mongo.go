@@ -236,7 +236,10 @@ func (m *mongodbImpl) GetReport(ctx context.Context, id string) (*entities.Puppe
 	defer t.ObserveDuration()
 
 	var report entities.PuppetReport
-	if err := collection.FindOne(ctx, bson.M{"id": id}).Decode(&report); err != nil {
+	err := collection.FindOne(ctx, bson.M{"id": id}).Decode(&report)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, ErrNotFound
+	} else if err != nil {
 		return nil, fmt.Errorf("error getting report: %w", err)
 	}
 

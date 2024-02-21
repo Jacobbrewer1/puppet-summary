@@ -253,8 +253,11 @@ func (s *sqliteImpl) GetReport(ctx context.Context, id string) (*entities.Puppet
 	row := stmt.QueryRowContext(ctx, id)
 
 	report := new(entities.PuppetReport)
-	if err := row.Scan(&report.ID, &report.Fqdn, &report.Env, &report.State, &report.ExecTime, &report.Runtime,
-		&report.Failed, &report.Changed, &report.Total, &report.Skipped); err != nil {
+	err = row.Scan(&report.ID, &report.Fqdn, &report.Env, &report.State, &report.ExecTime, &report.Runtime,
+		&report.Failed, &report.Changed, &report.Total, &report.Skipped)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	} else if err != nil {
 		return nil, fmt.Errorf("error scanning row: %w", err)
 	}
 
