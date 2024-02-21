@@ -30,3 +30,5 @@ clean:
 	rm -rf *.db
 	rm -rf *.db-shm
 	rm -rf *.db-wal
+	# Remove any reports received
+	rm -rf ./reports

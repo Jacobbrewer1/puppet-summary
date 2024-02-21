@@ -4,7 +4,7 @@ type Environment string
 
 const (
 	EnvProduction  Environment = "PRODUCTION"
-	EvnStaging     Environment = "STAGING"
+	EnvStaging     Environment = "STAGING"
 	EnvDevelopment Environment = "DEVELOPMENT"
 
 	// EnvAll is used to get all environments.
@@ -27,7 +27,7 @@ func (e Environment) IsIn(environments ...Environment) bool {
 func (e Environment) Valid() bool {
 	return e.IsIn(
 		EnvProduction,
-		EvnStaging,
+		EnvStaging,
 		EnvDevelopment,
 	)
 }

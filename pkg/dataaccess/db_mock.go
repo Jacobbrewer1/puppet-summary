@@ -32,8 +32,8 @@ func (m *MockDb) GetRuns(ctx context.Context) ([]*entities.PuppetRun, error) {
 	return args.Get(0).([]*entities.PuppetRun), args.Error(1)
 }
 
-func (m *MockDb) GetRunsByState(ctx context.Context, state entities.State) ([]*entities.PuppetRun, error) {
-	args := m.Called(ctx, state)
+func (m *MockDb) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
+	args := m.Called(ctx, states)
 	return args.Get(0).([]*entities.PuppetRun), args.Error(1)
 }
 

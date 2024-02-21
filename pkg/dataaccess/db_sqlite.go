@@ -11,7 +11,7 @@ import (
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -115,7 +115,7 @@ func (s *sqliteImpl) GetHistory(ctx context.Context, environment entities.Enviro
 
 	limit := 30
 
-	query := "SELECT DISTINCT DATE(executed_at) FROM reports"
+	query := "SELECT DISTINCT DATE(executed_at) FROM reports;"
 	if environment != entities.EnvAll {
 		query = fmt.Sprintf("%s WHERE environment = '%s'", query, environment)
 	}
@@ -236,7 +236,7 @@ func (s *sqliteImpl) GetReport(ctx context.Context, id string) (*entities.Puppet
 		failed,
 		changed,
 		total,
-		skipped
+		yaml_file
 	FROM reports
 	WHERE hash = ?;
 `
@@ -254,7 +254,7 @@ func (s *sqliteImpl) GetReport(ctx context.Context, id string) (*entities.Puppet
 
 	report := new(entities.PuppetReport)
 	err = row.Scan(&report.ID, &report.Fqdn, &report.Env, &report.State, &report.ExecTime, &report.Runtime,
-		&report.Failed, &report.Changed, &report.Total, &report.Skipped)
+		&report.Failed, &report.Changed, &report.Total, &report.YamlFile)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	} else if err != nil {
@@ -276,7 +276,7 @@ func (s *sqliteImpl) GetReports(ctx context.Context, fqdn string) ([]*entities.P
 		failed,
 		changed,
 		total,
-		skipped
+		yaml_file
 	FROM reports
 	WHERE fqdn = ?
 	ORDER BY executed_at DESC;
@@ -306,7 +306,7 @@ func (s *sqliteImpl) GetReports(ctx context.Context, fqdn string) ([]*entities.P
 	for rows.Next() {
 		report := new(entities.PuppetReportSummary)
 		if err := rows.Scan(&report.ID, &report.Fqdn, &report.Env, &report.State, &report.ExecTime, &report.Runtime,
-			&report.Failed, &report.Changed, &report.Total, &report.Skipped); err != nil {
+			&report.Failed, &report.Changed, &report.Total, &report.YamlFile); err != nil {
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
 		reports = append(reports, report)
@@ -467,8 +467,14 @@ func (s *sqliteImpl) SaveRun(ctx context.Context, run *entities.PuppetReport) er
 		run.Total,
 		run.Skipped,
 	)
-	if err != nil {
-		return fmt.Errorf("error saving run: %w", err)
+	// If the error is that the hash already exists, then we can ignore it.
+	sqlErr := new(sqlite3.Error)
+	ok := errors.As(err, sqlErr)
+	if ok && sqlErr.Code == 19 { // 19 is SQLITE_CONSTRAINT violation.
+		slog.Warn("Hash already exists, ignoring", slog.String(logging.KeyHash, run.ID))
+		return ErrDuplicate
+	} else if err != nil {
+		return fmt.Errorf("error executing statement: %w", err)
 	}
 	return nil
 }
@@ -480,7 +486,7 @@ func (s *sqliteImpl) setup() error {
 	sqlStmt := `
         CREATE TABLE IF NOT EXISTS reports (
           id          INTEGER PRIMARY KEY AUTOINCREMENT,
-		  hash 	      text,
+		  hash 	      text NOT NULL UNIQUE,
           fqdn        text,
 	      environment text,
           state       text,

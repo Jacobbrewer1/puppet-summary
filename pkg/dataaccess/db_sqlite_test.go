@@ -9,11 +9,11 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
-	"github.com/go-sql-driver/mysql"
+	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/suite"
 )
 
-type mysqlSuite struct {
+type sqliteSuite struct {
 	suite.Suite
 
 	// db is the database connection.
@@ -23,14 +23,14 @@ type mysqlSuite struct {
 	mockDB sqlmock.Sqlmock
 
 	// dbObject is the database object.
-	dbObject *mysqlImpl
+	dbObject *sqliteImpl
 }
 
-func TestMysqlSuite(t *testing.T) {
-	suite.Run(t, new(mysqlSuite))
+func TestSqliteSuite(t *testing.T) {
+	suite.Run(t, new(sqliteSuite))
 }
 
-func (s *mysqlSuite) SetupTest() {
+func (s *sqliteSuite) SetupTest() {
 	// Create a mock database connection.
 	db, mock, err := sqlmock.New()
 	s.Require().NoError(err)
@@ -38,18 +38,18 @@ func (s *mysqlSuite) SetupTest() {
 	s.mockDB = mock
 
 	// Create a new database object.
-	s.dbObject = &mysqlImpl{
+	s.dbObject = &sqliteImpl{
 		client: db,
 	}
 }
 
-func (s *mysqlSuite) TearDownTest() {
+func (s *sqliteSuite) TearDownTest() {
 	s.db = nil
 	s.mockDB = nil
 	s.dbObject = nil
 }
 
-func (s *mysqlSuite) TestClose() {
+func (s *sqliteSuite) TestClose() {
 	// Expect the database to be closed.
 	s.mockDB.ExpectClose()
 
@@ -57,7 +57,7 @@ func (s *mysqlSuite) TestClose() {
 	s.Require().NoError(err)
 }
 
-func (s *mysqlSuite) TestPing() {
+func (s *sqliteSuite) TestPing() {
 	// Expect the database to be pinged.
 	s.mockDB.ExpectPing()
 
@@ -65,7 +65,7 @@ func (s *mysqlSuite) TestPing() {
 	s.Require().NoError(err)
 }
 
-func (s *mysqlSuite) TestPurge() {
+func (s *sqliteSuite) TestPurge() {
 	expSql := regexp.QuoteMeta(`
 		DELETE FROM reports
 		WHERE executed_at < ?;
@@ -86,7 +86,7 @@ func (s *mysqlSuite) TestPurge() {
 	s.Require().Equal(5, affected)
 }
 
-func (s *mysqlSuite) TestGetEnvironments() {
+func (s *sqliteSuite) TestGetEnvironments() {
 	expSql := regexp.QuoteMeta(`
 		SELECT DISTINCT environment
 		FROM reports;
@@ -115,16 +115,16 @@ func (s *mysqlSuite) TestGetEnvironments() {
 	}, environments)
 }
 
-func (s *mysqlSuite) TestGetHistoryAllEnvs() {
+func (s *sqliteSuite) TestGetHistoryAllEnvs() {
 	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports;`)
 
 	// Expect the history to be retrieved.
 	s.mockDB.ExpectPrepare(expSql1)
 
 	rows1 := sqlmock.NewRows([]string{"DATE(executed_at)"}).
-		AddRow("2023-02-21T00:00:00Z").
-		AddRow("2023-02-22T00:00:00Z").
-		AddRow("2023-02-23T00:00:00Z")
+		AddRow("2023-02-21").
+		AddRow("2023-02-22").
+		AddRow("2023-02-23")
 
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)
@@ -212,16 +212,16 @@ func (s *mysqlSuite) TestGetHistoryAllEnvs() {
 	}, history)
 }
 
-func (s *mysqlSuite) TestGetHistorySingleEnv() {
+func (s *sqliteSuite) TestGetHistorySingleEnv() {
 	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports;`)
 
 	// Expect the history to be retrieved.
 	s.mockDB.ExpectPrepare(expSql1)
 
 	rows1 := sqlmock.NewRows([]string{"DATE(executed_at)"}).
-		AddRow("2023-02-21T00:00:00Z").
-		AddRow("2023-02-22T00:00:00Z").
-		AddRow("2023-02-23T00:00:00Z")
+		AddRow("2023-02-21").
+		AddRow("2023-02-22").
+		AddRow("2023-02-23")
 
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)
@@ -309,7 +309,7 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 	}, history)
 }
 
-func (s *mysqlSuite) TestGetReport() {
+func (s *sqliteSuite) TestGetReport() {
 	expSql := regexp.QuoteMeta(`
 SELECT hash,
        fqdn,
@@ -359,21 +359,22 @@ WHERE hash = ?;
 	}, report)
 }
 
-func (s *mysqlSuite) TestGetReports() {
+func (s *sqliteSuite) TestGetReports() {
 	expSql := regexp.QuoteMeta(`
-SELECT hash, 
-       fqdn,
-       environment,
-       state, 
-       executed_at, 
-       runtime, 
-       failed, 
-       changed, 
-       total,
-       yaml_file 
-FROM reports 
-WHERE fqdn = ? 
-ORDER by executed_at DESC;
+	SELECT
+		hash,
+		fqdn,
+		environment,
+		state,
+		executed_at,
+		runtime,
+		failed,
+		changed,
+		total,
+		yaml_file
+	FROM reports
+	WHERE fqdn = ?
+	ORDER BY executed_at DESC;
 	`)
 
 	id1 := "hash1"
@@ -426,7 +427,7 @@ ORDER by executed_at DESC;
 	}, report)
 }
 
-func (s *mysqlSuite) TestGetRunsByStateSingleState() {
+func (s *sqliteSuite) TestGetRunsByStateSingleState() {
 	expSql := regexp.QuoteMeta(`
 			SELECT
 				hash,
@@ -477,7 +478,7 @@ func (s *mysqlSuite) TestGetRunsByStateSingleState() {
 	}, report)
 }
 
-func (s *mysqlSuite) TestGetRunsByStateMultipleStates() {
+func (s *sqliteSuite) TestGetRunsByStateMultipleStates() {
 	expSql := regexp.QuoteMeta(`
 			SELECT
 				hash,
@@ -528,7 +529,7 @@ func (s *mysqlSuite) TestGetRunsByStateMultipleStates() {
 	}, report)
 }
 
-func (s *mysqlSuite) TestGetRuns() {
+func (s *sqliteSuite) TestGetRuns() {
 	expSql := regexp.QuoteMeta(`
 	SELECT
 		hash,
@@ -580,7 +581,7 @@ func (s *mysqlSuite) TestGetRuns() {
 	}, report)
 }
 
-func (s *mysqlSuite) TestSaveRunSuccess() {
+func (s *sqliteSuite) TestSaveRunSuccess() {
 	expSql := regexp.QuoteMeta(`
 	INSERT INTO reports(
 	                    hash,
@@ -627,7 +628,7 @@ func (s *mysqlSuite) TestSaveRunSuccess() {
 	s.Require().NoError(err)
 }
 
-func (s *mysqlSuite) TestSaveRunDuplicate() {
+func (s *sqliteSuite) TestSaveRunDuplicate() {
 	expSql := regexp.QuoteMeta(`
 	INSERT INTO reports(
 	                    hash,
@@ -655,10 +656,10 @@ func (s *mysqlSuite) TestSaveRunDuplicate() {
 	s.mockDB.ExpectExec(expSql).
 		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
 			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
-		WillReturnError(&mysql.MySQLError{
-			Number:   1062, // Duplicate entry
-			SQLState: [5]byte{'2', '3', '0', '0', '1'},
-			Message:  "Duplicate entry 'hash' for key 'PRIMARY'",
+		WillReturnError(sqlite3.Error{
+			Code:         19,
+			ExtendedCode: 2067,
+			SystemErrno:  0,
 		})
 
 	s.mockDB.ExpectClose()
