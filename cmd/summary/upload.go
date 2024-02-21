@@ -15,15 +15,6 @@ import (
 
 // uploadHandler takes the uploaded file and stores it in the database.
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
-	if uploadToken != "" {
-		// Check the token.
-		if r.Header.Get("Authorization") != "Bearer "+uploadToken {
-			slog.Warn("Invalid upload token", slog.String("token", r.Header.Get("Authorization")))
-			request.UnauthorizedHandler().ServeHTTP(w, r)
-			return
-		}
-	}
-
 	if r.Body == http.NoBody {
 		slog.Warn("Request body is empty")
 		w.WriteHeader(http.StatusBadRequest)

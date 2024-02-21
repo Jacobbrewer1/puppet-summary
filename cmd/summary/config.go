@@ -12,7 +12,7 @@ const (
 )
 
 var (
-	uploadToken string
+	authToken string
 )
 
 func setupLogging() error {
