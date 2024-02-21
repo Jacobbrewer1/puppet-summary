@@ -3,13 +3,13 @@ package dataaccess
 import (
 	"context"
 	"database/sql"
-	"github.com/go-sql-driver/mysql"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/suite"
 )
 
