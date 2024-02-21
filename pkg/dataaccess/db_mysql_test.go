@@ -3,6 +3,7 @@ package dataaccess
 import (
 	"context"
 	"database/sql"
+	"github.com/go-sql-driver/mysql"
 	"regexp"
 	"testing"
 	"time"
@@ -310,18 +311,18 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 
 func (s *mysqlSuite) TestGetReport() {
 	expSql := regexp.QuoteMeta(`
-		SELECT id, 
-       		fqdn,
-       		environment,
-       		state, 
-       		executed_at, 
-       		runtime, 
-       		failed, 
-       		changed, 
-       		total,
-       		yaml_file 
-		FROM reports 
-		WHERE hash = ?;
+SELECT hash,
+       fqdn,
+       environment,
+       state, 
+       executed_at, 
+       runtime, 
+       failed, 
+       changed, 
+       total,
+       yaml_file 
+FROM reports 
+WHERE hash = ?;
 	`)
 
 	id := "hash"
@@ -360,19 +361,19 @@ func (s *mysqlSuite) TestGetReport() {
 
 func (s *mysqlSuite) TestGetReports() {
 	expSql := regexp.QuoteMeta(`
-		SELECT id, 
-		       fqdn,
-		       environment,
-		       state, 
-		       executed_at, 
-		       runtime, 
-		       failed, 
-		       changed, 
-		       total,
-		       yaml_file 
-		FROM reports 
-		WHERE fqdn = ? 
-		ORDER by executed_at DESC;
+SELECT hash, 
+       fqdn,
+       environment,
+       state, 
+       executed_at, 
+       runtime, 
+       failed, 
+       changed, 
+       total,
+       yaml_file 
+FROM reports 
+WHERE fqdn = ? 
+ORDER by executed_at DESC;
 	`)
 
 	id1 := "hash1"
@@ -525,4 +526,154 @@ func (s *mysqlSuite) TestGetRunsByStateMultipleStates() {
 			Runtime:  entities.Duration(11 * time.Second),
 		},
 	}, report)
+}
+
+func (s *mysqlSuite) TestGetRuns() {
+	expSql := regexp.QuoteMeta(`
+	SELECT
+		hash,
+		fqdn,
+		state,
+		executed_at,
+		runtime,
+		environment
+	FROM reports
+	ORDER BY executed_at DESC;
+	`)
+
+	ctx := context.Background()
+
+	// Expect the report to be retrieved.
+	s.mockDB.ExpectPrepare(expSql)
+
+	now := time.Now()
+
+	rows := sqlmock.NewRows([]string{"hash", "fqdn", "state", "executed_at", "runtime", "environment"}).
+		AddRow("hash1", "fqdn1", "CHANGED", now, "10s", "PRODUCTION").
+		AddRow("hash2", "fqdn2", "UNCHANGED", now, "11s", "DEVELOPMENT")
+
+	s.mockDB.ExpectQuery(expSql).
+		WillReturnRows(rows)
+
+	s.mockDB.ExpectClose()
+
+	report, err := s.dbObject.GetRuns(ctx)
+	s.Require().NoError(err)
+
+	s.Require().Equal([]*entities.PuppetRun{
+		{
+			ID:       "hash1",
+			Fqdn:     "fqdn1",
+			State:    entities.StateChanged,
+			ExecTime: entities.Datetime(now),
+			Runtime:  entities.Duration(10 * time.Second),
+			Env:      entities.EnvProduction,
+		},
+		{
+			ID:       "hash2",
+			Fqdn:     "fqdn2",
+			State:    entities.StateUnchanged,
+			ExecTime: entities.Datetime(now),
+			Runtime:  entities.Duration(11 * time.Second),
+			Env:      entities.EnvDevelopment,
+		},
+	}, report)
+}
+
+func (s *mysqlSuite) TestSaveRunSuccess() {
+	expSql := regexp.QuoteMeta(`
+	INSERT INTO reports(
+	                    hash,
+	                    fqdn,
+	                    environment,
+	                    state,
+	                    yaml_file,
+	                    executed_at,
+	                    runtime,
+	                    failed,
+	                    changed,
+	                    total,
+	                    skipped
+	                    )
+	values(?,?,?,?,?,?,?,?,?,?,?);
+	`)
+
+	ctx := context.Background()
+
+	now, err := time.Parse(time.DateTime, "2024-02-21 10:20:53")
+	s.Require().NoError(err)
+
+	// Expect the report to be saved.
+	s.mockDB.ExpectPrepare(expSql)
+	s.mockDB.ExpectExec(expSql).
+		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
+			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	s.mockDB.ExpectClose()
+
+	err = s.dbObject.SaveRun(ctx, &entities.PuppetReport{
+		ID:       "hash",
+		Fqdn:     "fqdn",
+		Env:      entities.EnvProduction,
+		State:    entities.StateChanged,
+		YamlFile: "yaml_file",
+		ExecTime: entities.Datetime(now),
+		Runtime:  entities.Duration(10 * time.Second),
+		Failed:   1,
+		Changed:  2,
+		Total:    3,
+	})
+	s.Require().NoError(err)
+}
+
+func (s *mysqlSuite) TestSaveRunDuplicate() {
+	expSql := regexp.QuoteMeta(`
+	INSERT INTO reports(
+	                    hash,
+	                    fqdn,
+	                    environment,
+	                    state,
+	                    yaml_file,
+	                    executed_at,
+	                    runtime,
+	                    failed,
+	                    changed,
+	                    total,
+	                    skipped
+	                    )
+	values(?,?,?,?,?,?,?,?,?,?,?);
+	`)
+
+	ctx := context.Background()
+
+	now, err := time.Parse(time.DateTime, "2024-02-21 10:20:53")
+	s.Require().NoError(err)
+
+	// Expect the report to be saved.
+	s.mockDB.ExpectPrepare(expSql)
+	s.mockDB.ExpectExec(expSql).
+		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
+			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
+		WillReturnError(&mysql.MySQLError{
+			Number:   1062, // Duplicate entry
+			SQLState: [5]byte{'2', '3', '0', '0', '1'},
+			Message:  "Duplicate entry 'hash' for key 'PRIMARY'",
+		})
+
+	s.mockDB.ExpectClose()
+
+	err = s.dbObject.SaveRun(ctx, &entities.PuppetReport{
+		ID:       "hash",
+		Fqdn:     "fqdn",
+		Env:      entities.EnvProduction,
+		State:    entities.StateChanged,
+		YamlFile: "yaml_file",
+		ExecTime: entities.Datetime(now),
+		Runtime:  entities.Duration(10 * time.Second),
+		Failed:   1,
+		Changed:  2,
+		Total:    3,
+	})
+	s.Require().EqualError(err, ErrDuplicate.Error())
 }
