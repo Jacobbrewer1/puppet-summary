@@ -235,7 +235,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment entities.Environ
 
 func (m *mysqlImpl) GetReport(ctx context.Context, id string) (*entities.PuppetReport, error) {
 	sqlStmt := `
-SELECT id, 
+SELECT hash,
        fqdn,
        environment,
        state, 
@@ -271,7 +271,7 @@ WHERE hash = ?;
 
 func (m *mysqlImpl) GetReports(ctx context.Context, fqdn string) ([]*entities.PuppetReportSummary, error) {
 	sqlStmt := `
-SELECT id, 
+SELECT hash, 
        fqdn,
        environment,
        state, 
@@ -320,12 +320,11 @@ ORDER by executed_at DESC;
 
 func (m *mysqlImpl) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
 	sqlStmt := `
-	SELECT
-		hash,
-		fqdn,
-		state,
-		executed_at,
-		runtime
+	SELECT hash,
+		   fqdn,
+		   state,
+		   executed_at,
+		   runtime
 	FROM reports
 	WHERE state IN (?)
 	ORDER BY executed_at DESC;
@@ -494,6 +493,7 @@ func (m *mysqlImpl) setup() error {
 CREATE TABLE IF NOT EXISTS reports
 (
     id          INTEGER PRIMARY KEY AUTO_INCREMENT,
+    hash        text,
     fqdn        text,
     environment text,
     state       text,

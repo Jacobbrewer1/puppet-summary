@@ -9,7 +9,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -325,7 +324,7 @@ func (s *mysqlSuite) TestGetReport() {
 		WHERE hash = ?;
 	`)
 
-	id := uuid.New()
+	id := "hash"
 	ctx := context.Background()
 
 	// Expect the report to be retrieved.
@@ -337,16 +336,16 @@ func (s *mysqlSuite) TestGetReport() {
 		AddRow(id, "fqdn", "PRODUCTION", "CHANGED", now, "10s", 1, 2, 3, "yaml_file")
 
 	s.mockDB.ExpectQuery(expSql).
-		WithArgs(id.String()).
+		WithArgs(id).
 		WillReturnRows(rows)
 
 	s.mockDB.ExpectClose()
 
-	report, err := s.dbObject.GetReport(ctx, id.String())
+	report, err := s.dbObject.GetReport(ctx, id)
 	s.Require().NoError(err)
 
 	s.Require().Equal(&entities.PuppetReport{
-		ID:       id.String(),
+		ID:       id,
 		Fqdn:     "fqdn",
 		Env:      entities.EnvProduction,
 		State:    entities.StateChanged,
@@ -376,8 +375,8 @@ func (s *mysqlSuite) TestGetReports() {
 		ORDER by executed_at DESC;
 	`)
 
-	id1 := uuid.New()
-	id2 := uuid.New()
+	id1 := "hash1"
+	id2 := "hash2"
 	ctx := context.Background()
 
 	// Expect the report to be retrieved.
@@ -400,7 +399,7 @@ func (s *mysqlSuite) TestGetReports() {
 
 	s.Require().Equal([]*entities.PuppetReportSummary{
 		{
-			ID:       id1.String(),
+			ID:       id1,
 			Fqdn:     "fqdn",
 			Env:      entities.EnvProduction,
 			State:    entities.StateChanged,
@@ -412,7 +411,7 @@ func (s *mysqlSuite) TestGetReports() {
 			YamlFile: "yaml_file",
 		},
 		{
-			ID:       id2.String(),
+			ID:       id2,
 			Fqdn:     "fqdn",
 			Env:      entities.EnvDevelopment,
 			State:    entities.StateChanged,
