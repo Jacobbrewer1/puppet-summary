@@ -19,8 +19,8 @@ import (
 )
 
 type serveCmd struct {
-	// uploadToken is the token used to authenticate requests to the upload endpoint. If empty, the endpoint is not secure.
-	uploadToken string
+	// authToken is the token used to authenticate requests to the upload endpoint. If empty, the endpoint is not secure.
+	authToken string
 
 	// autoPurge is the number of days to keep data for. If 0 (or not set), data will not be purged.
 	autoPurge int
@@ -47,7 +47,7 @@ func (s *serveCmd) Usage() string {
 }
 
 func (s *serveCmd) SetFlags(f *flag.FlagSet) {
-	f.StringVar(&s.uploadToken, "upload-token", "", "The Bearer token used to authenticate requests to the upload endpoint.")
+	f.StringVar(&s.authToken, "auth-token", "", "The Bearer token used to authenticate requests to the upload endpoint.")
 	f.IntVar(&s.autoPurge, "auto-purge", 0, "The number of days to keep data for. If 0 (or not set), data will not be purged.")
 	f.StringVar(&s.dbType, "db", dataaccess.DbSqlite.String(), "The type of database to use. Valid values are 'sqlite', 'mysql', and 'mongodb'.")
 	f.StringVar(&s.gcs, "gcs", "", "The name of the Google Cloud Storage bucket to use. (Setting this will enable GCS)")
@@ -134,9 +134,9 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 			return fmt.Errorf("error connecting to local storage: %w", err)
 		}
 	}
-	if s.uploadToken != "" {
+	if s.authToken != "" {
 		slog.Info("Upload token set, security on upload endpoint is enabled")
-		uploadToken = s.uploadToken
+		authToken = s.authToken
 	} else {
 		slog.Info("Upload token not set, upload endpoint is not secure")
 	}
@@ -151,7 +151,7 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 func (s *serveCmd) setupRoutes(r *mux.Router) {
 	apiRouter := r.PathPrefix(pathApi).Subrouter()
 
-	r.HandleFunc(pathUpload, middlewareHttp(uploadHandler, AuthOptionNone)).Methods(http.MethodPost)
+	r.HandleFunc(pathUpload, middlewareHttp(uploadHandler, AuthOptionRequired)).Methods(http.MethodPost)
 	apiRouter.HandleFunc(pathStateID, middlewareHttp(stateHandler, AuthOptionNone)).Methods(http.MethodGet)
 
 	r.HandleFunc(pathIndex, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)

@@ -63,8 +63,17 @@ func middlewareHttp(handler Controller, authOption AuthOption) http.HandlerFunc 
 		}
 
 		switch authOption {
-		case AuthOptionNone, AuthOptionRequired:
+		case AuthOptionNone:
 		// Do nothing.
+		case AuthOptionRequired:
+			if authToken != "" {
+				// Check the token.
+				if r.Header.Get("Authorization") != "Bearer "+authToken {
+					slog.Warn("Invalid upload token", slog.String("token", r.Header.Get("Authorization")))
+					request.UnauthorizedHandler().ServeHTTP(w, r)
+					return
+				}
+			}
 		case AuthOptionInternal:
 			// Check if the request is internal.
 			if !request.IsInternal(r) {
