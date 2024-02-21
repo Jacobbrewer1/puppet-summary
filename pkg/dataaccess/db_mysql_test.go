@@ -3,13 +3,13 @@ package dataaccess
 import (
 	"context"
 	"database/sql"
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
-	"github.com/google/uuid"
 	"regexp"
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 )
 
