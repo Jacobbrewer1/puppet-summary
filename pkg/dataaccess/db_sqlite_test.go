@@ -3,13 +3,13 @@ package dataaccess
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
-	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -656,11 +656,7 @@ func (s *sqliteSuite) TestSaveRunDuplicate() {
 	s.mockDB.ExpectExec(expSql).
 		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
 			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
-		WillReturnError(sqlite3.Error{
-			Code:         19,
-			ExtendedCode: 2067,
-			SystemErrno:  0,
-		})
+		WillReturnError(errors.New("UNIQUE constraint failed: reports.hash"))
 
 	s.mockDB.ExpectClose()
 
@@ -676,5 +672,5 @@ func (s *sqliteSuite) TestSaveRunDuplicate() {
 		Changed:  2,
 		Total:    3,
 	})
-	s.Require().EqualError(err, ErrDuplicate.Error())
+	s.Require().Equal(ErrDuplicate, err)
 }
