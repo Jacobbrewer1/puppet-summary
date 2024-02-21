@@ -318,7 +318,7 @@ ORDER by executed_at DESC;
 	return reports, nil
 }
 
-func (m *mysqlImpl) GetRunsByState(ctx context.Context, state entities.State) ([]*entities.PuppetRun, error) {
+func (m *mysqlImpl) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
 	sqlStmt := `
 	SELECT
 		hash,
@@ -340,7 +340,16 @@ func (m *mysqlImpl) GetRunsByState(ctx context.Context, state entities.State) ([
 		return nil, fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	rows, err := stmt.QueryContext(ctx, state)
+	// Convert the states to a string csv.
+	statesStr := ""
+	for i, state := range states {
+		statesStr += state.String()
+		if i != len(states)-1 {
+			statesStr += ","
+		}
+	}
+
+	rows, err := stmt.QueryContext(ctx, statesStr)
 	if err != nil {
 		return nil, fmt.Errorf("error executing statement: %w", err)
 	}

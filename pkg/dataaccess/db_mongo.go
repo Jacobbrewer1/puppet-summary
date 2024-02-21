@@ -284,14 +284,21 @@ func (m *mongodbImpl) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (m *mongodbImpl) GetRunsByState(ctx context.Context, state entities.State) ([]*entities.PuppetRun, error) {
+func (m *mongodbImpl) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
 	// Start the prometheus metrics.
 	t := prometheus.NewTimer(DatabaseLatency.WithLabelValues("get_nodes_by_state"))
 	defer t.ObserveDuration()
 
-	cursor, err := collection.Find(ctx, bson.M{"state": state})
+	// Create the filter for the states.
+	filter := bson.M{
+		"state": bson.M{
+			"$in": states,
+		},
+	}
+
+	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("error getting nodes: %w", err)
 	}

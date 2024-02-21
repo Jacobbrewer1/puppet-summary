@@ -425,3 +425,105 @@ func (s *mysqlSuite) TestGetReports() {
 		},
 	}, report)
 }
+
+func (s *mysqlSuite) TestGetRunsByStateSingleState() {
+	expSql := regexp.QuoteMeta(`
+			SELECT
+				hash,
+				fqdn,
+				state,
+				executed_at,
+				runtime
+			FROM reports
+			WHERE state IN (?)
+			ORDER BY executed_at DESC;
+		`)
+
+	ctx := context.Background()
+
+	// Expect the report to be retrieved.
+	s.mockDB.ExpectPrepare(expSql)
+
+	now := time.Now()
+
+	rows := sqlmock.NewRows([]string{"hash", "fqdn", "state", "executed_at", "runtime"}).
+		AddRow("hash1", "fqdn1", "CHANGED", now, "10s").
+		AddRow("hash2", "fqdn2", "CHANGED", now, "11s")
+
+	s.mockDB.ExpectQuery(expSql).
+		WithArgs("CHANGED").
+		WillReturnRows(rows)
+
+	s.mockDB.ExpectClose()
+
+	report, err := s.dbObject.GetRunsByState(ctx, entities.StateChanged)
+	s.Require().NoError(err)
+
+	s.Require().Equal([]*entities.PuppetRun{
+		{
+			ID:       "hash1",
+			Fqdn:     "fqdn1",
+			State:    entities.StateChanged,
+			ExecTime: entities.Datetime(now),
+			Runtime:  entities.Duration(10 * time.Second),
+		},
+		{
+			ID:       "hash2",
+			Fqdn:     "fqdn2",
+			State:    entities.StateChanged,
+			ExecTime: entities.Datetime(now),
+			Runtime:  entities.Duration(11 * time.Second),
+		},
+	}, report)
+}
+
+func (s *mysqlSuite) TestGetRunsByStateMultipleStates() {
+	expSql := regexp.QuoteMeta(`
+			SELECT
+				hash,
+				fqdn,
+				state,
+				executed_at,
+				runtime
+			FROM reports
+			WHERE state IN (?)
+			ORDER BY executed_at DESC;
+		`)
+
+	ctx := context.Background()
+
+	// Expect the report to be retrieved.
+	s.mockDB.ExpectPrepare(expSql)
+
+	now := time.Now()
+
+	rows := sqlmock.NewRows([]string{"hash", "fqdn", "state", "executed_at", "runtime"}).
+		AddRow("hash1", "fqdn1", "CHANGED", now, "10s").
+		AddRow("hash2", "fqdn2", "UNCHANGED", now, "11s")
+
+	s.mockDB.ExpectQuery(expSql).
+		WithArgs("CHANGED,UNCHANGED").
+		WillReturnRows(rows)
+
+	s.mockDB.ExpectClose()
+
+	report, err := s.dbObject.GetRunsByState(ctx, entities.StateChanged, entities.StateUnchanged)
+	s.Require().NoError(err)
+
+	s.Require().Equal([]*entities.PuppetRun{
+		{
+			ID:       "hash1",
+			Fqdn:     "fqdn1",
+			State:    entities.StateChanged,
+			ExecTime: entities.Datetime(now),
+			Runtime:  entities.Duration(10 * time.Second),
+		},
+		{
+			ID:       "hash2",
+			Fqdn:     "fqdn2",
+			State:    entities.StateUnchanged,
+			ExecTime: entities.Datetime(now),
+			Runtime:  entities.Duration(11 * time.Second),
+		},
+	}, report)
+}
