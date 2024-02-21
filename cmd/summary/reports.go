@@ -39,7 +39,13 @@ func reportIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get the report from the database.
 	rep, err := dataaccess.DB.GetReport(r.Context(), id)
-	if err != nil {
+	if errors.Is(err, dataaccess.ErrNotFound) {
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Report not found")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	} else if err != nil {
 		if !errors.Is(err, context.Canceled) {
 			slog.Error("Error getting report", slog.String(logging.KeyError, err.Error()))
 		}

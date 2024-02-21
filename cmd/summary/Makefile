@@ -26,3 +26,7 @@ clean:
 	@echo "Cleaning up"
 	# Remove the bin directory
 	rm -rf bin
+	# Remove any SQLITE files
+	rm -rf *.db
+	rm -rf *.db-shm
+	rm -rf *.db-wal
