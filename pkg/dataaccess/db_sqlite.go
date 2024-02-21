@@ -11,7 +11,7 @@ import (
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
-	sqlite "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -468,9 +468,7 @@ func (s *sqliteImpl) SaveRun(ctx context.Context, run *entities.PuppetReport) er
 		run.Skipped,
 	)
 	// If the error is that the hash already exists, then we can ignore it.
-	sqlErr := new(sqlite.Error)
-	ok := errors.As(err, sqlErr)
-	if ok && sqlErr.Code == 19 { // 19 is SQLITE_CONSTRAINT violation.
+	if err.Error() == "UNIQUE constraint failed: reports.hash" { // I don't like this, but we get weird import errors if we use errors.Is to do with the sqlite3 driver.
 		slog.Warn("Hash already exists, ignoring", slog.String(logging.KeyHash, run.ID))
 		return ErrDuplicate
 	} else if err != nil {
