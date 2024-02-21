@@ -11,7 +11,7 @@ import (
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
-	"github.com/mattn/go-sqlite3"
+	sqlite "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -468,7 +468,7 @@ func (s *sqliteImpl) SaveRun(ctx context.Context, run *entities.PuppetReport) er
 		run.Skipped,
 	)
 	// If the error is that the hash already exists, then we can ignore it.
-	sqlErr := new(sqlite3.Error)
+	sqlErr := new(sqlite.Error)
 	ok := errors.As(err, sqlErr)
 	if ok && sqlErr.Code == 19 { // 19 is SQLITE_CONSTRAINT violation.
 		slog.Warn("Hash already exists, ignoring", slog.String(logging.KeyHash, run.ID))
