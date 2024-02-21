@@ -110,7 +110,7 @@ func (s *sqliteSuite) TestGetEnvironments() {
 
 	s.Require().Equal([]entities.Environment{
 		entities.EnvProduction,
-		entities.EvnStaging,
+		entities.EnvStaging,
 		entities.EnvDevelopment,
 	}, environments)
 }

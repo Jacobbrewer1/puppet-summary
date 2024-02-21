@@ -11,7 +11,7 @@ type PuppetRun struct {
 	State     State       `json:"state" bson:"state"`
 	ExecTime  Datetime    `json:"exec_time" bson:"exec_time"`
 	Runtime   Duration    `json:"runtime" bson:"runtime"`
-	TimeSince Duration    `json:"time_since" bson:"time_since"`
+	TimeSince Duration    `json:"-" bson:"time_since"`
 }
 
 func (p *PuppetRun) CalculateTimeSince() {
