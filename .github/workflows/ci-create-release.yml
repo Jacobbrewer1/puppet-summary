@@ -1,0 +1,54 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Create changelog
+        id: create-changelog
+        # EOF is used as a delimiter for multiline support
+        run: |
+          echo 'CHANGELOG<<EOF' >> $GITHUB_ENV
+          git fetch -a
+          wget "https://github.com/clog-tool/clog-cli/releases/download/v0.9.3/clog-v0.9.3-x86_64-unknown-linux-gnu.tar.gz"
+          tar xvzf clog-v0.9.3-x86_64-unknown-linux-gnu.tar.gz
+          
+          # Get the previous tag
+          previous_tag=$(git describe --tags `git rev-list --tags --max-count=1 --skip=1` --always)
+          
+          # Count how many tags are in the repository, if there is only one tag, then the previous tag is the first commit
+          if [ $(git tag | wc -l) -eq 1 ]; then
+            echo "Only one tag found, using the first commit as the previous tag"
+            previous_tag=$(git log --reverse --pretty=format:"%H" | head -n 1)
+          fi
+          
+          # Get the commit for the current tag
+          current_tag=$(git rev-list -n 1 ${{ github.ref }})
+          
+          echo "Previous tag: $previous_tag"
+          echo "Current tag: $current_tag"
+          echo "Repository: ${{ github.server_url }}/${{ github.repository }}"
+          
+          # Generate the changelog
+          ./clog --to "$current_tag" --repository ${{ github.server_url }}/${{ github.repository }} --format "markdown" --outfile ${{ github.workspace }}/changelog.md
+          
+          cat changelog.md >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
+      # Use the changelog provided by the previous step to create a release.
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: ${{ github.workspace }}/changelog.md
+          token: ${{ secrets.GITHUB_TOKEN }}
