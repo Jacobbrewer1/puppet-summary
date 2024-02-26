@@ -89,14 +89,11 @@ GCS_CREDENTIALS=<json-contents>
 
 _Coming soon_
 
-#### Secure Upload
+#### Endpoint Authentication
 
 ```shell
-./puppet-summary -upload-token <token>
+./puppet-summary -auth-token <token>
 ```
 
-This will enable the `/upload` endpoint to only accept requests that have this Bearer token in the `Authorization`
-header. This is useful if you want to prevent any unauthorised requests to the `/upload` endpoint. One architecture
-pattern that you could use is to have a proxy in front of the Puppet Summary application that will handle the
-authentication and then forward the request to the Puppet Summary application with the Bearer token in the
-`Authorization` header.
+This will enable the security on the endpoints that use the authentication method `AuthOptionRequired`. This includes
+the `/upload`. If the token is not provided, there will be no security on the endpoints.
