@@ -152,7 +152,7 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 
 func (s *serveCmd) setupRoutes(r *mux.Router) {
 	r.HandleFunc(pathMetrics, promhttp.Handler().ServeHTTP).Methods(http.MethodGet)
-	r.HandleFunc(pathHealth, healthHandler()).Methods(http.MethodGet)
+	r.HandleFunc(pathHealth, healthHandler().ServeHTTP).Methods(http.MethodGet)
 
 	r.NotFoundHandler = request.NotFoundHandler()
 	r.MethodNotAllowedHandler = request.MethodNotAllowedHandler()
@@ -163,10 +163,14 @@ func (s *serveCmd) setupRoutes(r *mux.Router) {
 		BaseRouter: r,
 		BaseURL:    pathApi,
 		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			w.WriteHeader(http.StatusBadRequest)
 			encErr := json.NewEncoder(w).Encode(request.NewMessage(fmt.Sprintf("Error handling request: %s", err)))
 			if encErr != nil {
 				slog.Error("Error encoding response", slog.String(logging.KeyError, encErr.Error()))
 			}
+		},
+		Middlewares: []svc.MiddlewareFunc{
+			middlewareHttp,
 		},
 	})
 }

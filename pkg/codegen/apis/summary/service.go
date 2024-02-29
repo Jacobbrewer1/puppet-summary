@@ -6,9 +6,12 @@ package summary
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -79,16 +82,31 @@ type ServerInterfaceWrapper struct {
 	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type MiddlewareFunc func(http.Handler, AuthOption) http.Handler
+type MiddlewareFunc func(http.Handler, AuthOption) http.HandlerFunc
 
 // GetAllNodes operation middleware
 func (siw *ServerInterfaceWrapper) GetAllNodes(w http.ResponseWriter, r *http.Request) {
-	w = request.NewClientWriter(w)
+	now := time.Now().UTC()
+	cw := request.NewClientWriter(w)
+
+	var path string
+	route := mux.CurrentRoute(r)
+	if route != nil { // The route may be nil if the request is not routed.
+		var err error
+		path, err = route.GetPathTemplate()
+		if err != nil {
+			// An error here is only returned if the route does not define a path.
+			slog.Error("Error getting path template", slog.String(logging.KeyError, err.Error()))
+			path = r.URL.Path // If the route does not define a path, use the URL path.
+		}
+	} else {
+		path = r.URL.Path // If the route is nil, use the URL path.
+	}
 
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetAllNodes(w, r)
+		siw.Handler.GetAllNodes(cw, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -99,27 +117,49 @@ func (siw *ServerInterfaceWrapper) GetAllNodes(w http.ResponseWriter, r *http.Re
 		handler = middleware(handler, opt)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(cw, r.WithContext(ctx))
+
+	httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
+	httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
+	httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
 }
 
 const BearerAuthToken = "BearerAuthToken"
 
 // UploadPuppetReport operation middleware
 func (siw *ServerInterfaceWrapper) UploadPuppetReport(w http.ResponseWriter, r *http.Request) {
-	w = request.NewClientWriter(w)
+	now := time.Now().UTC()
+	cw := request.NewClientWriter(w)
+
+	var path string
+	route := mux.CurrentRoute(r)
+	if route != nil { // The route may be nil if the request is not routed.
+		var err error
+		path, err = route.GetPathTemplate()
+		if err != nil {
+			// An error here is only returned if the route does not define a path.
+			slog.Error("Error getting path template", slog.String(logging.KeyError, err.Error()))
+			path = r.URL.Path // If the route does not define a path, use the URL path.
+		}
+	} else {
+		path = r.URL.Path // If the route is nil, use the URL path.
+	}
 
 	ctx := r.Context()
 
 	token := r.Header.Get("Authorization")
 	if token == "" {
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "Authorization"})
+		siw.ErrorHandlerFunc(cw, r, &RequiredHeaderError{ParamName: "Authorization"})
+		return
+	} else if !strings.HasPrefix(token, "Bearer ") {
+		siw.ErrorHandlerFunc(cw, r, &InvalidParamFormatError{ParamName: "Authorization", Err: fmt.Errorf("Authorization header must start with 'Bearer'")})
 		return
 	}
 	token = strings.TrimPrefix(token, "Bearer ")
 	ctx = context.WithValue(ctx, BearerAuthToken, token)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UploadPuppetReport(w, r)
+		siw.Handler.UploadPuppetReport(cw, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -130,7 +170,11 @@ func (siw *ServerInterfaceWrapper) UploadPuppetReport(w http.ResponseWriter, r *
 		handler = middleware(handler, opt)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(cw, r.WithContext(ctx))
+
+	httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
+	httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
+	httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
 }
 
 type UnescapedCookieParamError struct {

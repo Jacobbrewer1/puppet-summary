@@ -11,7 +11,7 @@ import (
 	"github.com/alexliesenfeld/health"
 )
 
-func healthHandler() Controller {
+func healthHandler() http.Handler {
 	checker := health.NewChecker(
 		// Disable caching of the results of the checks.
 		health.WithCacheDuration(0),
@@ -43,7 +43,5 @@ func healthHandler() Controller {
 		}),
 	)
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		health.NewHandler(checker).ServeHTTP(w, r)
-	}
+	return health.NewHandler(checker)
 }
