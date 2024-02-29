@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	svc "github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
@@ -149,23 +151,6 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 }
 
 func (s *serveCmd) setupRoutes(r *mux.Router) {
-	apiRouter := r.PathPrefix(pathApi).Subrouter()
-
-	r.HandleFunc(pathUpload, middlewareHttp(uploadHandler, AuthOptionRequired)).Methods(http.MethodPost)
-	apiRouter.HandleFunc(pathStateID, middlewareHttp(stateHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathIndex, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-	apiRouter.HandleFunc(pathNodes, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathIndexEnv, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-	apiRouter.HandleFunc(pathNodesEnv, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathNodeFqdn, middlewareHttp(nodeFqdnHandler, AuthOptionNone)).Methods(http.MethodGet)
-	apiRouter.HandleFunc(pathNodeFqdn, middlewareHttp(nodeFqdnHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathReportID, middlewareHttp(reportIDHandler, AuthOptionNone)).Methods(http.MethodGet)
-	apiRouter.HandleFunc(pathReportID, middlewareHttp(reportIDHandler, AuthOptionNone)).Methods(http.MethodGet)
-
 	r.HandleFunc(pathMetrics, middlewareHttp(promhttp.Handler().ServeHTTP, AuthOptionInternal)).Methods(http.MethodGet)
 	r.HandleFunc(pathHealth, middlewareHttp(healthHandler(), AuthOptionInternal)).Methods(http.MethodGet)
 
@@ -173,4 +158,15 @@ func (s *serveCmd) setupRoutes(r *mux.Router) {
 	r.MethodNotAllowedHandler = request.MethodNotAllowedHandler()
 
 	r.PathPrefix(pathAssets).Handler(http.StripPrefix(pathAssets, http.FileServer(http.Dir("./assets"))))
+
+	svc.HandlerWithOptions(new(webService), svc.GorillaServerOptions{
+		BaseRouter: r,
+		BaseURL:    pathApi,
+		ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			encErr := json.NewEncoder(w).Encode(request.NewMessage(fmt.Sprintf("Error handling request: %s", err)))
+			if encErr != nil {
+				slog.Error("Error encoding response", slog.String(logging.KeyError, encErr.Error()))
+			}
+		},
+	})
 }

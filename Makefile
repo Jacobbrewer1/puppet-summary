@@ -18,3 +18,13 @@ clean:
 	for d in cmd/*; do \
 		(cd $$d && make clean); \
 	done
+code-gen:
+	@echo "Generating code"
+	go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
+
+	cd ./pkg/codegen/apis
+
+	# Loop through each directory. Inside the directory we want to use the directory name as the package name.
+	for d in ./pkg/codegen/apis/*; do \
+		(cd $$d && oapi-codegen -generate gorilla -package $$(basename $$d) routes.yaml > service.go); \
+	done

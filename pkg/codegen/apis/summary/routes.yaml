@@ -1,0 +1,73 @@
+openapi: 3.0.0
+info:
+  version: latest
+  title: Puppet Summary API
+  description: Documentation for Puppet Summary API
+
+paths:
+  /nodes:
+    get:
+      summary: Get all nodes
+      operationId: GetAllNodes
+      description: Get all nodes
+      responses:
+        '200':
+          description: Get all nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getAllNodesResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Error returned from upstream request
+
+components:
+  schemas:
+    environment:
+      description: The environment that a machine is reporting from.
+      type: string
+      enum:
+        - PRODUCTION
+        - STAGING
+        - DEVELOPMENT
+      example: PRODUCTION
+
+    state:
+      description: The estate of the machine from the report.
+      type: string
+      enum:
+        - CHANGED
+        - UNCHANGED
+        - FAILED
+        - SKIPPED
+      example: CHANGED
+
+    getAllNodesResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          nodes:
+            type: array
+            items:
+              $ref: '#/components/schemas/node'
+
+    node:
+      properties:
+        fqdn:
+          description: The Hostname of the machine.
+          type: string
+          example: 'fqdn.domain.com'
+        env:
+          $ref: '#/components/schemas/environment'
+        state:
+          $ref: '#/components/schemas/state'
+        exec_time:
+          description: The time of when the Puppet Report Ran. (time.RFC3339 format)
+          type: string
+          example: '2024-02-13T10:00:09Z'
+        runtime:
+          description: How long the puppet apply took.
+          type: string
+          example: 23s

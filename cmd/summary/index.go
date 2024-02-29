@@ -20,7 +20,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
+func (svc webService) GetAllNodes(w http.ResponseWriter, r *http.Request) {
 	// See if the environment has been provided in the URL.
 	envStr, ok := mux.Vars(r)["env"]
 	env := entities.EnvAll
@@ -130,6 +130,11 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
+	}
+
+	// Remove ID's from the nodes.
+	for i := range filteredNodes {
+		filteredNodes[i].ID = ""
 	}
 
 	// If the path prefix is "api", then we want to just encode the nodes as JSON and return them.

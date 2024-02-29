@@ -5,7 +5,7 @@ import "time"
 // PuppetRun is the structure which is used to list a summary of puppet
 // runs on the front-page.
 type PuppetRun struct {
-	ID        string      `json:"id" bson:"id"`
+	ID        string      `json:"id,omitempty" bson:"id"`
 	Fqdn      string      `json:"fqdn" bson:"fqdn"`
 	Env       Environment `json:"env" bson:"env"`
 	State     State       `json:"state" bson:"state"`
