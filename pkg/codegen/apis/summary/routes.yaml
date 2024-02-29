@@ -109,6 +109,7 @@ components:
         exec_time:
           type: string
           format: date-time
+          example: '2024-02-13T10:00:09Z'
         runtime:
           type: string
         failed:

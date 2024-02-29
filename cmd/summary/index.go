@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,28 +14,36 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
-	"github.com/gorilla/mux"
 )
 
-func (svc webService) GetAllNodes(w http.ResponseWriter, r *http.Request) {
-	// See if the environment has been provided in the URL.
-	envStr, ok := mux.Vars(r)["env"]
-	env := entities.EnvAll
-	if ok {
-		envStr = strings.ToUpper(envStr)
-		env = entities.Environment(envStr)
-		if !env.Valid() {
-			// Respond with 400 bad request.
-			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(request.NewMessage("Invalid environment provided")); err != nil {
-				slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-			}
-			return
+const ctxEnvKey = "env"
+
+func (svc webService) GetAllNodesByEnvironment(w http.ResponseWriter, r *http.Request, env summary.Environment) {
+	ctx := r.Context()
+
+	entEnv := entities.Environment(env)
+	if !entEnv.Valid() {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Invalid environment")); err != nil {
+			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
+		return
+	}
+
+	ctx = context.WithValue(ctx, ctxEnvKey, entEnv)
+
+	svc.GetAllNodes(w, r.WithContext(ctx))
+}
+
+func (svc webService) GetAllNodes(w http.ResponseWriter, r *http.Request) {
+	env := entities.EnvAll
+	if r.Context().Value(ctxEnvKey) != nil {
+		env = r.Context().Value(ctxEnvKey).(entities.Environment)
 	}
 
 	nodes, err := dataaccess.DB.GetRuns(r.Context())

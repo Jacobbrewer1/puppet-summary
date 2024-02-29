@@ -21,12 +21,6 @@ type ServerInterfaceWrapper struct {
 type MiddlewareFunc func(http.Handler, AuthOption) http.HandlerFunc
 
 {{range .}}{{$opid := .OperationId}}
-{{range .SecurityDefinitions}}
-  {{- $authIdentity := .ProviderName | sanitizeGoIdentity | ucFirst }}
-  {{ if eq $authIdentity "BearerAuth" }}
-    const {{.ProviderName | sanitizeGoIdentity | ucFirst}}Token = "{{.ProviderName | sanitizeGoIdentity | ucFirst}}Token"
-  {{ end }}
-{{ end }}
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Request) {
@@ -61,20 +55,8 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{end}}
 
 {{range .SecurityDefinitions}}
-  {{- $authIdentity := .ProviderName | sanitizeGoIdentity | ucFirst }}
-  {{ if eq $authIdentity "BearerAuth" }}
-    token := r.Header.Get("Authorization")
-    if token == "" {
-      siw.ErrorHandlerFunc(cw, r, &RequiredHeaderError{ParamName: "Authorization"})
-      return
-    } else if !strings.HasPrefix(token, "Bearer ") {
-      siw.ErrorHandlerFunc(cw, r, &InvalidParamFormatError{ParamName: "Authorization", Err: fmt.Errorf("Authorization header must start with 'Bearer'")})
-      return
-    }
-    token = strings.TrimPrefix(token, "Bearer ")
-    ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Token, token)
-  {{ end }}
-{{ end }}
+  ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
+{{end}}
 
   {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context
@@ -229,11 +211,9 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{ else }}
     opt := AuthOptionNone
     {{ end }}
-
     handler = middleware(handler, opt)
   }
   {{end}}
-
   handler.ServeHTTP(cw, r.WithContext(ctx))
 }
 {{end}}

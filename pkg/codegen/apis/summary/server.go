@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/gorilla/mux"
@@ -102,24 +101,13 @@ func (siw *ServerInterfaceWrapper) GetAllNodesByEnvironment(w http.ResponseWrite
 	handler.ServeHTTP(cw, r.WithContext(ctx))
 }
 
-const BearerAuthToken = "BearerAuthToken"
-
 // UploadPuppetReport operation middleware
 func (siw *ServerInterfaceWrapper) UploadPuppetReport(w http.ResponseWriter, r *http.Request) {
 	cw := request.NewClientWriter(w)
 
 	ctx := r.Context()
 
-	token := r.Header.Get("Authorization")
-	if token == "" {
-		siw.ErrorHandlerFunc(cw, r, &RequiredHeaderError{ParamName: "Authorization"})
-		return
-	} else if !strings.HasPrefix(token, "Bearer ") {
-		siw.ErrorHandlerFunc(cw, r, &InvalidParamFormatError{ParamName: "Authorization", Err: fmt.Errorf("Authorization header must start with 'Bearer'")})
-		return
-	}
-	token = strings.TrimPrefix(token, "Bearer ")
-	ctx = context.WithValue(ctx, BearerAuthToken, token)
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UploadPuppetReport(cw, r)
