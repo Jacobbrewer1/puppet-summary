@@ -11,38 +11,6 @@ const (
 	AuthOptionRequired
 )
 
-var (
-	// httpTotalRequests is the total number of http requests.
-	httpTotalRequests = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Name:      "http_requests_total",
-			Namespace: appName,
-			Help:      "Total number of http requests",
-		},
-		[]string{"path", "method", "status_code"},
-	)
-
-	// httpRequestDuration is the duration of the http request.
-	httpRequestDuration = promauto.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:      "http_request_duration_seconds",
-			Namespace: appName,
-			Help:      "Duration of the http request",
-		},
-		[]string{"path", "method", "status_code"},
-	)
-
-	// httpRequestSize is the size of the http request.
-	httpRequestSize = promauto.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:      "http_request_size",
-			Namespace: appName,
-			Help:      "Size of the http request",
-		},
-		[]string{"path", "method", "status_code"},
-	)
-)
-
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
@@ -62,22 +30,7 @@ type MiddlewareFunc func(http.Handler, AuthOption) http.HandlerFunc
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Request) {
-  now := time.Now().UTC()
   cw := request.NewClientWriter(w)
-
-  var path string
-  route := mux.CurrentRoute(r)
-  if route != nil { // The route may be nil if the request is not routed.
-  	var err error
-  	path, err = route.GetPathTemplate()
-  	if err != nil {
-  		// An error here is only returned if the route does not define a path.
-  		slog.Error("Error getting path template", slog.String(logging.KeyError, err.Error()))
-  		path = r.URL.Path // If the route does not define a path, use the URL path.
-  	}
-  } else {
-  	path = r.URL.Path // If the route is nil, use the URL path.
-  }
 
   ctx := r.Context()
   {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
@@ -282,10 +235,6 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{end}}
 
   handler.ServeHTTP(cw, r.WithContext(ctx))
-
-  httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
-  httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
-  httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
 }
 {{end}}
 

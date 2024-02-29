@@ -6,25 +6,22 @@ package summary
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/oapi-codegen/runtime"
 )
-
-const appName = "summary"
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get all nodes
 	// (GET /nodes)
 	GetAllNodes(w http.ResponseWriter, r *http.Request)
+	// Get all nodes by environment
+	// (GET /nodes/enviroment/{env})
+	GetAllNodesByEnvironment(w http.ResponseWriter, r *http.Request, env Environment)
 	// Upload a puppet report
 	// (POST /upload)
 	UploadPuppetReport(w http.ResponseWriter, r *http.Request)
@@ -43,38 +40,6 @@ const (
 	AuthOptionRequired
 )
 
-var (
-	// httpTotalRequests is the total number of http requests.
-	httpTotalRequests = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Name:      "http_requests_total",
-			Namespace: appName,
-			Help:      "Total number of http requests",
-		},
-		[]string{"path", "method", "status_code"},
-	)
-
-	// httpRequestDuration is the duration of the http request.
-	httpRequestDuration = promauto.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:      "http_request_duration_seconds",
-			Namespace: appName,
-			Help:      "Duration of the http request",
-		},
-		[]string{"path", "method", "status_code"},
-	)
-
-	// httpRequestSize is the size of the http request.
-	httpRequestSize = promauto.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:      "http_request_size",
-			Namespace: appName,
-			Help:      "Size of the http request",
-		},
-		[]string{"path", "method", "status_code"},
-	)
-)
-
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
@@ -86,22 +51,7 @@ type MiddlewareFunc func(http.Handler, AuthOption) http.HandlerFunc
 
 // GetAllNodes operation middleware
 func (siw *ServerInterfaceWrapper) GetAllNodes(w http.ResponseWriter, r *http.Request) {
-	now := time.Now().UTC()
 	cw := request.NewClientWriter(w)
-
-	var path string
-	route := mux.CurrentRoute(r)
-	if route != nil { // The route may be nil if the request is not routed.
-		var err error
-		path, err = route.GetPathTemplate()
-		if err != nil {
-			// An error here is only returned if the route does not define a path.
-			slog.Error("Error getting path template", slog.String(logging.KeyError, err.Error()))
-			path = r.URL.Path // If the route does not define a path, use the URL path.
-		}
-	} else {
-		path = r.URL.Path // If the route is nil, use the URL path.
-	}
 
 	ctx := r.Context()
 
@@ -118,32 +68,45 @@ func (siw *ServerInterfaceWrapper) GetAllNodes(w http.ResponseWriter, r *http.Re
 	}
 
 	handler.ServeHTTP(cw, r.WithContext(ctx))
+}
 
-	httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
-	httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
-	httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
+// GetAllNodesByEnvironment operation middleware
+func (siw *ServerInterfaceWrapper) GetAllNodesByEnvironment(w http.ResponseWriter, r *http.Request) {
+	cw := request.NewClientWriter(w)
+
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "env" -------------
+	var env Environment
+
+	err = runtime.BindStyledParameterWithOptions("simple", "env", mux.Vars(r)["env"], &env, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(cw, r, &InvalidParamFormatError{ParamName: "env", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAllNodesByEnvironment(cw, r, env)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		// Check to see what kind of authentication is required
+
+		opt := AuthOptionNone
+
+		handler = middleware(handler, opt)
+	}
+
+	handler.ServeHTTP(cw, r.WithContext(ctx))
 }
 
 const BearerAuthToken = "BearerAuthToken"
 
 // UploadPuppetReport operation middleware
 func (siw *ServerInterfaceWrapper) UploadPuppetReport(w http.ResponseWriter, r *http.Request) {
-	now := time.Now().UTC()
 	cw := request.NewClientWriter(w)
-
-	var path string
-	route := mux.CurrentRoute(r)
-	if route != nil { // The route may be nil if the request is not routed.
-		var err error
-		path, err = route.GetPathTemplate()
-		if err != nil {
-			// An error here is only returned if the route does not define a path.
-			slog.Error("Error getting path template", slog.String(logging.KeyError, err.Error()))
-			path = r.URL.Path // If the route does not define a path, use the URL path.
-		}
-	} else {
-		path = r.URL.Path // If the route is nil, use the URL path.
-	}
 
 	ctx := r.Context()
 
@@ -171,10 +134,6 @@ func (siw *ServerInterfaceWrapper) UploadPuppetReport(w http.ResponseWriter, r *
 	}
 
 	handler.ServeHTTP(cw, r.WithContext(ctx))
-
-	httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
-	httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
-	httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
 }
 
 type UnescapedCookieParamError struct {
@@ -291,6 +250,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/nodes", wrapper.GetAllNodes).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/nodes/enviroment/{env}", wrapper.GetAllNodesByEnvironment).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/upload", wrapper.UploadPuppetReport).Methods("POST")
 

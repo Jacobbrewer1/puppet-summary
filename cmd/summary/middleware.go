@@ -2,18 +2,23 @@ package main
 
 import (
 	"encoding/json"
-	"log/slog"
-	"net/http"
-	"runtime/debug"
-
+	"fmt"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/messages"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
+	"github.com/gorilla/mux"
+	"log/slog"
+	"net/http"
+	"runtime/debug"
+	"time"
 )
 
 func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		now := time.Now().UTC()
+		cw := request.NewClientWriter(w)
+
 		// Recover from any panics that occur in the handler.
 		defer func() {
 			if rec := recover(); rec != nil {
@@ -27,6 +32,20 @@ func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.Ha
 				}
 			}
 		}()
+
+		var path string
+		route := mux.CurrentRoute(r)
+		if route != nil { // The route may be nil if the request is not routed.
+			var err error
+			path, err = route.GetPathTemplate()
+			if err != nil {
+				// An error here is only returned if the route does not define a path.
+				slog.Error("Error getting path template", slog.String(logging.KeyError, err.Error()))
+				path = r.URL.Path // If the route does not define a path, use the URL path.
+			}
+		} else {
+			path = r.URL.Path // If the route is nil, use the URL path.
+		}
 
 		switch authOption {
 		case summary.AuthOptionNone:
@@ -61,5 +80,9 @@ func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.Ha
 		}
 
 		handler.ServeHTTP(w, r)
+
+		httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
+		httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
+		httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
 	}
 }

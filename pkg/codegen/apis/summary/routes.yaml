@@ -32,7 +32,6 @@ paths:
           description: Report already exists
         '500':
           description: Error returned from upstream request
-
   /nodes:
     get:
       summary: Get all nodes
@@ -41,6 +40,29 @@ paths:
       responses:
         '200':
           description: Get all nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getAllNodesResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Error returned from upstream request
+  /nodes/enviroment/{env}:
+    get:
+      summary: Get all nodes by environment
+      operationId: GetAllNodesByEnvironment
+      description: Get all nodes by environment
+      parameters:
+        - name: env
+          in: path
+          description: The environment to get nodes from
+          required: true
+          schema:
+            $ref: '#/components/schemas/environment'
+      responses:
+        '200':
+          description: Get all nodes by environment
           content:
             application/json:
               schema:
