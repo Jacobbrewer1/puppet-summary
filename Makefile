@@ -26,5 +26,5 @@ code-gen:
 
 	# Loop through each directory. Inside the directory we want to use the directory name as the package name.
 	for d in ./pkg/codegen/apis/*; do \
-		(cd $$d && oapi-codegen -generate gorilla -package $$(basename $$d) routes.yaml > service.go); \
+		(cd $$d && oapi-codegen -generate gorilla -package $$(basename $$d) -templates ../../templates routes.yaml > service.go); \
 	done

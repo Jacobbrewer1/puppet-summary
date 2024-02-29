@@ -4,18 +4,73 @@
 package summary
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
+
+const appName = "summary"
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get all nodes
 	// (GET /nodes)
 	GetAllNodes(w http.ResponseWriter, r *http.Request)
+	// Upload a puppet report
+	// (POST /upload)
+	UploadPuppetReport(w http.ResponseWriter, r *http.Request)
 }
+
+type AuthOption int
+
+const (
+	// AuthOptionNone is the option for no authentication.
+	AuthOptionNone AuthOption = iota
+
+	// AuthOptionInternal is the option to only allow internal traffic.
+	AuthOptionInternal
+
+	// AuthOptionRequired is the option for required authentication.
+	AuthOptionRequired
+)
+
+var (
+	// httpTotalRequests is the total number of http requests.
+	httpTotalRequests = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name:      "http_requests_total",
+			Namespace: appName,
+			Help:      "Total number of http requests",
+		},
+		[]string{"path", "method", "status_code"},
+	)
+
+	// httpRequestDuration is the duration of the http request.
+	httpRequestDuration = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:      "http_request_duration_seconds",
+			Namespace: appName,
+			Help:      "Duration of the http request",
+		},
+		[]string{"path", "method", "status_code"},
+	)
+
+	// httpRequestSize is the size of the http request.
+	httpRequestSize = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:      "http_request_size",
+			Namespace: appName,
+			Help:      "Size of the http request",
+		},
+		[]string{"path", "method", "status_code"},
+	)
+)
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
@@ -24,10 +79,12 @@ type ServerInterfaceWrapper struct {
 	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type MiddlewareFunc func(http.Handler) http.Handler
+type MiddlewareFunc func(http.Handler, AuthOption) http.Handler
 
 // GetAllNodes operation middleware
 func (siw *ServerInterfaceWrapper) GetAllNodes(w http.ResponseWriter, r *http.Request) {
+	w = request.NewClientWriter(w)
+
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +92,42 @@ func (siw *ServerInterfaceWrapper) GetAllNodes(w http.ResponseWriter, r *http.Re
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+		// Check to see what kind of authentication is required
+
+		opt := AuthOptionNone
+
+		handler = middleware(handler, opt)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+const BearerAuthToken = "BearerAuthToken"
+
+// UploadPuppetReport operation middleware
+func (siw *ServerInterfaceWrapper) UploadPuppetReport(w http.ResponseWriter, r *http.Request) {
+	w = request.NewClientWriter(w)
+
+	ctx := r.Context()
+
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "Authorization"})
+		return
+	}
+	token = strings.TrimPrefix(token, "Bearer ")
+	ctx = context.WithValue(ctx, BearerAuthToken, token)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UploadPuppetReport(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		// Check to see what kind of authentication is required
+
+		opt := AuthOptionRequired
+
+		handler = middleware(handler, opt)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -155,6 +247,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/nodes", wrapper.GetAllNodes).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/upload", wrapper.UploadPuppetReport).Methods("POST")
 
 	return r
 }

@@ -5,6 +5,34 @@ info:
   description: Documentation for Puppet Summary API
 
 paths:
+  /upload:
+    post:
+      summary: Upload a puppet report
+      operationId: UploadPuppetReport
+      description: Upload a puppet report
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Binary puppet report
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: Puppet report uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/uploadPuppetReportResponse'
+        '400':
+          description: Bad request
+        '409':
+          description: Report already exists
+        '500':
+          description: Error returned from upstream request
+
   /nodes:
     get:
       summary: Get all nodes
@@ -42,6 +70,65 @@ components:
         - FAILED
         - SKIPPED
       example: CHANGED
+
+    uploadPuppetReportResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        fqdn:
+          type: string
+        puppet_version:
+          type: number
+        env:
+          type: string
+        state:
+          type: string
+        exec_time:
+          type: string
+          format: date-time
+        runtime:
+          type: string
+        failed:
+          type: integer
+        changed:
+          type: integer
+        skipped:
+          type: integer
+        total:
+          type: integer
+        log_messages:
+          type: array
+          items:
+            type: string
+        resources_failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        resources_changed:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        resources_skipped:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        resources_ok:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+
+    Resource:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        file:
+          type: string
+        line:
+          type: string
 
     getAllNodesResponse:
       type: array

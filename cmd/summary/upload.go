@@ -13,8 +13,8 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 )
 
-// uploadHandler takes the uploaded file and stores it in the database.
-func uploadHandler(w http.ResponseWriter, r *http.Request) {
+// UploadPuppetReport takes the uploaded file and stores it in the database.
+func (svc webService) UploadPuppetReport(w http.ResponseWriter, r *http.Request) {
 	if r.Body == http.NoBody {
 		slog.Warn("Request body is empty")
 		w.WriteHeader(http.StatusBadRequest)

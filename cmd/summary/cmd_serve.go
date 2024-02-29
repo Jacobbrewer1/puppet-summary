@@ -151,8 +151,8 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 }
 
 func (s *serveCmd) setupRoutes(r *mux.Router) {
-	r.HandleFunc(pathMetrics, middlewareHttp(promhttp.Handler().ServeHTTP, AuthOptionInternal)).Methods(http.MethodGet)
-	r.HandleFunc(pathHealth, middlewareHttp(healthHandler(), AuthOptionInternal)).Methods(http.MethodGet)
+	r.HandleFunc(pathMetrics, promhttp.Handler().ServeHTTP).Methods(http.MethodGet)
+	r.HandleFunc(pathHealth, healthHandler()).Methods(http.MethodGet)
 
 	r.NotFoundHandler = request.NotFoundHandler()
 	r.MethodNotAllowedHandler = request.MethodNotAllowedHandler()
