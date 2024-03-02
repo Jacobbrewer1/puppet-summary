@@ -1,81 +1,73 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"log/slog"
 	"net/http"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/messages"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/services/parser"
 )
 
-func (s service) UploadPuppetReport(w http.ResponseWriter, r *http.Request) {
-	if r.Body == http.NoBody {
-		slog.Warn("Request body is empty")
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrBadRequest)); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	}
-
-	// Get the request body as a byte slice.
-	bdy, err := io.ReadAll(r.Body)
-	if err != nil {
-		slog.Warn("Error reading request body", slog.String(logging.KeyError, err.Error()))
-		w.WriteHeader(http.StatusInternalServerError)
-		if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrInternalServer)); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	}
-	rep, err := parser.ParsePuppetReport(bdy)
-	if err != nil {
-		slog.Warn("Error parsing puppet report", slog.String(logging.KeyError, err.Error()))
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrBadRequest)); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	}
-
-	// Generate the file path.
-	rep.ReportFilePath()
-
-	// Save the file to Files.
-	err = dataaccess.Files.SaveFile(r.Context(), rep.YamlFile, bdy)
-	if err != nil {
-		slog.Error("Error saving file to Files", slog.String(logging.KeyError, err.Error()))
-		w.WriteHeader(http.StatusInternalServerError)
-		if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrInternalServer)); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	}
-
-	// Save the run to the database.
-	err = s.r.SaveRun(r.Context(), rep)
-	if errors.Is(err, dataaccess.ErrDuplicate) {
-		slog.Warn("Duplicate run", slog.String(logging.KeyError, err.Error()))
-		w.WriteHeader(http.StatusConflict)
-		if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrDuplicate)); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+func (s service) GetReportById(w http.ResponseWriter, r *http.Request, id string) {
+	// Get the report from the database.
+	rep, err := s.r.GetReport(r.Context(), id)
+	if errors.Is(err, dataaccess.ErrNotFound) {
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Report not found")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	} else if err != nil {
-		slog.Error("Error saving run to database", slog.String(logging.KeyError, err.Error()))
+		if !errors.Is(err, context.Canceled) {
+			slog.Error("Error getting report", slog.String(logging.KeyError, err.Error()))
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrInternalServer)); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting report")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
+
+	// Check if the report exists.
+	if rep == nil {
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Report not found")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	}
+
+	// Get the Yaml report from Files.
+	file, err := dataaccess.Files.DownloadFile(r.Context(), rep.ReportFilePath())
+	if err != nil {
+		slog.Error("Error downloading yaml file", slog.String(logging.KeyError, err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Error downloading yaml file")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	}
+
+	// Parse the parser file.
+	report, err := parser.ParsePuppetReport(file)
+	if err != nil {
+		slog.Error("Error parsing yaml file", slog.String(logging.KeyError, err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Error parsing yaml file")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
+		}
+		return
+	}
+
+	// Sort the report resources.
+	report.SortResources()
+	rep = report
 
 	resp := summary.PuppetReport{
 		Changed:          summary.Point(int(rep.Changed)),
@@ -150,13 +142,9 @@ func (s service) UploadPuppetReport(w http.ResponseWriter, r *http.Request) {
 		resp.ResourcesSkipped = &skipped
 	}
 
-	// Return the report in the response.
-	if err := json.NewEncoder(w).Encode(rep); err != nil {
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		w.WriteHeader(http.StatusInternalServerError)
-		if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrInternalServer)); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/services/api"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/web"
 	"log/slog"
 	"net/http"
 	"runtime"
@@ -16,6 +16,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/api"
 	"github.com/google/subcommands"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -179,4 +180,10 @@ func (s *serveCmd) setup(r *mux.Router, db dataaccess.Database) {
 				middlewareHttp,
 			},
 		})
+
+	web.NewServiceFromRouter(
+		r,
+		db,
+		metricsWrapper,
+	)
 }

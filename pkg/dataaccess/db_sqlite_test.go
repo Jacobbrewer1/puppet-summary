@@ -608,7 +608,7 @@ func (s *sqliteSuite) TestSaveRunSuccess() {
 	// Expect the report to be saved.
 	s.mockDB.ExpectPrepare(expSql)
 	s.mockDB.ExpectExec(expSql).
-		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
+		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.parser",
 			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -655,7 +655,7 @@ func (s *sqliteSuite) TestSaveRunDuplicate() {
 	// Expect the report to be saved.
 	s.mockDB.ExpectPrepare(expSql)
 	s.mockDB.ExpectExec(expSql).
-		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
+		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.parser",
 			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
 		WillReturnError(errors.New("UNIQUE constraint failed: reports.hash"))
 

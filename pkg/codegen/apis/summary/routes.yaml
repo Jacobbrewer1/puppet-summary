@@ -25,7 +25,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/uploadPuppetReportResponse'
+                $ref: '#/components/schemas/puppetReport'
         '400':
           description: Bad request
         '409':
@@ -43,11 +43,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/getAllNodesResponse'
+                $ref: '#/components/schemas/nodesResponse'
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
         '500':
           description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
   /nodes/enviroment/{env}:
     get:
       summary: Get all nodes by environment
@@ -66,14 +74,122 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/getAllNodesResponse'
+                $ref: '#/components/schemas/nodesResponse'
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
         '500':
           description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+  /states/{state}:
+    get:
+      summary: Get all nodes by state
+      operationId: GetAllNodesByState
+      description: Get all nodes by state
+      parameters:
+        - name: state
+          in: path
+          description: The state to get nodes from
+          required: true
+          schema:
+            $ref: '#/components/schemas/state'
+      responses:
+        '200':
+          description: Get all nodes by state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/nodesResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+  /report/{id}:
+    get:
+      summary: Get a report by id
+      operationId: GetReportById
+      description: Get a report by id
+      parameters:
+        - name: id
+          in: path
+          description: The id of the report to get
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Get a report by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/puppetReport'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+  /nodes/{fqdn}:
+    get:
+      summary: Get a node by fqdn
+      operationId: GetNodeByFqdn
+      description: Get a node by fqdn
+      parameters:
+        - name: fqdn
+          in: path
+          description: The fqdn of the node to get
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Get a node by fqdn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
 
 components:
   schemas:
+    message:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Example message'
+
     environment:
       description: The environment that a machine is reporting from.
       type: string
@@ -93,7 +209,7 @@ components:
         - SKIPPED
       example: CHANGED
 
-    uploadPuppetReportResponse:
+    puppetReport:
       type: object
       properties:
         id:
@@ -153,7 +269,7 @@ components:
         line:
           type: string
 
-    getAllNodesResponse:
+    nodesResponse:
       type: object
       properties:
         nodes:

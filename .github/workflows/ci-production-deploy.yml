@@ -40,5 +40,5 @@ jobs:
       - name: Deploy Puppet Summary
         uses: WyriHaximus/github-action-helm3@v3
         with:
-          exec: helm upgrade --install puppet-summary ./charts --values charts/valueFiles/prod-1/puppet-summary.yaml --set image.tag=${{ steps.get_commit.outputs.sha_short_deploy }}
+          exec: helm upgrade --install puppet-summary ./charts --values charts/valueFiles/prod-1/puppet-summary.parser --set image.tag=${{ steps.get_commit.outputs.sha_short_deploy }}
           kubeconfig: '${{ secrets.KUBE_CONFIG }}'

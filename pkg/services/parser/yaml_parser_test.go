@@ -1,4 +1,4 @@
-package api
+package parser
 
 import (
 	"os"
@@ -39,7 +39,7 @@ func (s *ParsePuppetReportSuite) SetupTest() {
 		s.Require().DirExists(pwd, "Expected a data directory")
 	}
 
-	validYAMLFile := filepath.Join(pwd, "testdata/example.yaml")
+	validYAMLFile := filepath.Join(pwd, "testdata/example.parser")
 	s.Require().FileExists(validYAMLFile, "Expected a valid YAML file")
 
 	s.yamlContent, err = os.ReadFile(validYAMLFile)
@@ -62,7 +62,7 @@ func (s *ParsePuppetReportSuite) TestParsePuppetReport_InvalidYAML() {
 	invalidYAML := []byte("invalid YAML content")
 
 	// Call the parsePuppetReport function
-	report, err := parsePuppetReport(invalidYAML)
+	report, err := ParsePuppetReport(invalidYAML)
 
 	// Assertions
 	s.Error(err, "Expected an error for invalid YAML")

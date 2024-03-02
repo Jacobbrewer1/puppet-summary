@@ -1,4 +1,4 @@
-package api
+package parser
 
 import (
 	"crypto/sha1"
@@ -336,9 +336,9 @@ func parsePuppetVersion(y *simpleyaml.Yaml, out *entities.PuppetReport) error {
 	return nil
 }
 
-// parsePuppetReport is our main function in this module. Given an
+// ParsePuppetReport is our main function in this module. Given an
 // array of bytes we read the input and produce a PuppetReport structure.
-func parsePuppetReport(content []byte) (*entities.PuppetReport, error) {
+func ParsePuppetReport(content []byte) (*entities.PuppetReport, error) {
 	rep := new(entities.PuppetReport)
 
 	yaml, err := simpleyaml.NewYaml(content)
