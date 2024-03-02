@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/purge"
 	"log/slog"
 	"strings"
 
@@ -76,7 +77,7 @@ func (p *purgeCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		return subcommands.ExitFailure
 	}
 
-	_, err := dataaccess.ConnectDatabase(ctx, p.dbType)
+	db, err := dataaccess.ConnectDatabase(ctx, p.dbType)
 	if err != nil {
 		slog.Error("Error connecting to database", slog.String(logging.KeyError, err.Error()))
 		return subcommands.ExitFailure
@@ -96,7 +97,12 @@ func (p *purgeCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 	}
 
 	// Purge the reports
-	purgeData(p.days)
+	purgeSvc := purge.NewService(db)
+	err = purgeSvc.PurgeData(p.days)
+	if err != nil {
+		slog.Error("Error purging data", slog.String(logging.KeyError, err.Error()))
+		return subcommands.ExitFailure
+	}
 
 	return subcommands.ExitSuccess
 }

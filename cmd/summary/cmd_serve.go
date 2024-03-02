@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/purge"
 	"log/slog"
 	"net/http"
 	"runtime"
@@ -95,7 +96,8 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 
 	// Set up the purge routine
 	if s.autoPurge != 0 {
-		if err := setupPurge(s.autoPurge); err != nil {
+		purgeSvc := purge.NewService(db)
+		if err := purgeSvc.SetupPurge(s.autoPurge); err != nil {
 			slog.Error("Error setting up purge routine", slog.String(logging.KeyError, err.Error()))
 		}
 	} else {
