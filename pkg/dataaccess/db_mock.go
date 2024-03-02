@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,7 +33,7 @@ func (m *MockDb) GetRuns(ctx context.Context) ([]*entities.PuppetRun, error) {
 	return args.Get(0).([]*entities.PuppetRun), args.Error(1)
 }
 
-func (m *MockDb) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
+func (m *MockDb) GetRunsByState(ctx context.Context, states ...summary.State) ([]*entities.PuppetRun, error) {
 	args := m.Called(ctx, states)
 	return args.Get(0).([]*entities.PuppetRun), args.Error(1)
 }
@@ -47,14 +48,14 @@ func (m *MockDb) GetReport(ctx context.Context, id string) (*entities.PuppetRepo
 	return args.Get(0).(*entities.PuppetReport), args.Error(1)
 }
 
-func (m *MockDb) GetHistory(ctx context.Context, environment entities.Environment) ([]*entities.PuppetHistory, error) {
+func (m *MockDb) GetHistory(ctx context.Context, environment ...summary.Environment) ([]*entities.PuppetHistory, error) {
 	args := m.Called(ctx, environment)
 	return args.Get(0).([]*entities.PuppetHistory), args.Error(1)
 }
 
-func (m *MockDb) GetEnvironments(ctx context.Context) ([]entities.Environment, error) {
+func (m *MockDb) GetEnvironments(ctx context.Context) ([]summary.Environment, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]entities.Environment), args.Error(1)
+	return args.Get(0).([]summary.Environment), args.Error(1)
 }
 
 func (m *MockDb) Purge(ctx context.Context, from time.Time) (int, error) {

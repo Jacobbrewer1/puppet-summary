@@ -40,6 +40,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/prometheus/client_golang/prometheus"
     "github.com/prometheus/client_golang/prometheus/promauto"
+    "go.mongodb.org/mongo-driver/bson"
 	{{- range .ExternalImports}}
 	{{ . }}
 	{{- end}}

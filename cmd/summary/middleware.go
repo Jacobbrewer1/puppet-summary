@@ -47,14 +47,16 @@ func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.Ha
 			path = r.URL.Path // If the route is nil, use the URL path.
 		}
 
+		reqSize := r.ContentLength
+
 		switch authOption {
 		case summary.AuthOptionNone:
 		// Do nothing.
 		case summary.AuthOptionRequired:
 			if authToken != "" {
 				// Check if the request has the correct token.
-				token := r.Context().Value(summary.BearerAuthToken)
-				if token == nil || token.(string) != authToken {
+				token := r.Context().Value(summary.BearerAuthScopes)
+				if token == nil || len(token.(string)) == 0 || token.(string) != authToken {
 					w.WriteHeader(http.StatusUnauthorized)
 					if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrUnauthorized)); err != nil {
 						slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
@@ -83,6 +85,6 @@ func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.Ha
 
 		httpTotalRequests.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Inc()
 		httpRequestDuration.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(time.Since(now).Seconds())
-		httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(r.ContentLength))
+		httpRequestSize.WithLabelValues(path, r.Method, fmt.Sprintf("%d", cw.StatusCode())).Observe(float64(reqSize))
 	}
 }

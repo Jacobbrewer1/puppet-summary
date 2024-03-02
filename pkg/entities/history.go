@@ -1,5 +1,7 @@
 package entities
 
+import "github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
+
 type PuppetHistory struct {
 	// Date is the date of the run.
 	Date string `json:"date" bson:"date"`
@@ -14,13 +16,13 @@ type PuppetHistory struct {
 	Failed int `json:"failed" bson:"failed"`
 }
 
-func (p *PuppetHistory) AddCount(state State, count int) {
+func (p *PuppetHistory) AddCount(state summary.State, count int) {
 	switch state {
-	case StateChanged:
+	case summary.State_CHANGED:
 		p.Changed += count
-	case StateUnchanged:
+	case summary.State_UNCHANGED:
 		p.Unchanged += count
-	case StateFailed:
+	case summary.State_FAILED:
 		p.Failed += count
 	}
 }

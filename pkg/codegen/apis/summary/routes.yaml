@@ -11,7 +11,7 @@ paths:
       operationId: UploadPuppetReport
       description: Upload a puppet report
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         description: Binary puppet report
         content:
@@ -103,9 +103,9 @@ components:
         puppet_version:
           type: number
         env:
-          type: string
+          $ref: '#/components/schemas/environment'
         state:
-          type: string
+          $ref: '#/components/schemas/state'
         exec_time:
           type: string
           format: date-time
@@ -154,14 +154,12 @@ components:
           type: string
 
     getAllNodesResponse:
-      type: array
-      items:
-        type: object
-        properties:
-          nodes:
-            type: array
-            items:
-              $ref: '#/components/schemas/node'
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/node'
 
     node:
       properties:

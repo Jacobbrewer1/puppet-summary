@@ -9,32 +9,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-func connectSQLite() {
-	dbLite, err := sql.Open("sqlite3", "file:puppet-summary.db?_journal_mode=WAL")
-	if err != nil {
-		slog.Error("Error connecting to SQLite", slog.String(logging.KeyError, err.Error()))
-		os.Exit(1)
-	}
-
-	impl := &sqliteImpl{
-		client: dbLite,
-	}
-
-	if err := impl.setup(); err != nil {
-		slog.Error("Error setting up SQLite", slog.String(logging.KeyError, err.Error()))
-		os.Exit(1)
-	}
-
-	DB = impl
-
-	slog.Debug("Connected to SQLite")
-}
 
 type sqliteImpl struct {
 	// client is the database.
@@ -73,7 +53,7 @@ func (s *sqliteImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 	return int(rows), nil
 }
 
-func (s *sqliteImpl) GetEnvironments(ctx context.Context) ([]entities.Environment, error) {
+func (s *sqliteImpl) GetEnvironments(ctx context.Context) ([]summary.Environment, error) {
 	sqlStmt := `
 	SELECT DISTINCT environment 
 	FROM reports;
@@ -98,9 +78,9 @@ func (s *sqliteImpl) GetEnvironments(ctx context.Context) ([]entities.Environmen
 		}
 	}(rows)
 
-	envs := make([]entities.Environment, 0)
+	envs := make([]summary.Environment, 0)
 	for rows.Next() {
-		var env entities.Environment
+		var env summary.Environment
 		if err := rows.Scan(&env); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
 		}
@@ -110,14 +90,21 @@ func (s *sqliteImpl) GetEnvironments(ctx context.Context) ([]entities.Environmen
 	return envs, nil
 }
 
-func (s *sqliteImpl) GetHistory(ctx context.Context, environment entities.Environment) ([]*entities.PuppetHistory, error) {
+func (s *sqliteImpl) GetHistory(ctx context.Context, environment ...summary.Environment) ([]*entities.PuppetHistory, error) {
 	res := make([]*entities.PuppetHistory, 0)
 
 	limit := 30
 
 	query := "SELECT DISTINCT DATE(executed_at) FROM reports;"
-	if environment != entities.EnvAll {
-		query = fmt.Sprintf("%s WHERE environment = '%s'", query, environment)
+	if len(environment) > 0 {
+		query = "SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ("
+		for i, env := range environment {
+			query += "'" + string(env) + "'"
+			if i != len(environment)-1 {
+				query += ","
+			}
+		}
+		query += ");"
 	}
 
 	stmt, err := s.client.PrepareContext(ctx, query)
@@ -177,9 +164,17 @@ func (s *sqliteImpl) GetHistory(ctx context.Context, environment entities.Enviro
 		endTime := startTime.AddDate(0, 0, 1)
 
 		locQuery := "SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ?"
-		if environment != entities.EnvAll {
-			locQuery += " AND environment = '" + environment.String() + "' "
+		if len(environment) > 0 {
+			locQuery += " AND environment IN ("
+			for i, env := range environment {
+				locQuery += "'" + string(env) + "'"
+				if i != len(environment)-1 {
+					locQuery += ","
+				}
+			}
+			locQuery += ")"
 		}
+
 		locQuery += " GROUP BY state;"
 		stmt, err = s.client.PrepareContext(ctx, locQuery)
 		if err != nil {
@@ -192,20 +187,20 @@ func (s *sqliteImpl) GetHistory(ctx context.Context, environment entities.Enviro
 		}
 
 		for rows.Next() {
-			var state entities.State
+			var state summary.State
 			var count int
 
 			err = rows.Scan(&state, &count)
 			if err != nil {
 				return nil, errors.New("failed to scan SQL")
 			}
-			if state.IsIn(entities.StateChanged) {
+			if state.IsIn(summary.State_CHANGED) {
 				x.Changed += count
 			}
-			if state.IsIn(entities.StateUnchanged) {
+			if state.IsIn(summary.State_UNCHANGED) {
 				x.Unchanged += count
 			}
-			if state.IsIn(entities.StateFailed) {
+			if state.IsIn(summary.State_FAILED) {
 				x.Failed += count
 			}
 		}
@@ -323,7 +318,7 @@ func (s *sqliteImpl) Ping(ctx context.Context) error {
 	return s.client.PingContext(ctx)
 }
 
-func (s *sqliteImpl) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
+func (s *sqliteImpl) GetRunsByState(ctx context.Context, states ...summary.State) ([]*entities.PuppetRun, error) {
 	sqlStmt := `
 	SELECT
 		hash,
@@ -348,7 +343,7 @@ func (s *sqliteImpl) GetRunsByState(ctx context.Context, states ...entities.Stat
 	// Convert the states to a string csv.
 	statesStr := ""
 	for i, state := range states {
-		statesStr += state.String()
+		statesStr += string(state)
 		if i != len(states)-1 {
 			statesStr += ","
 		}
@@ -508,4 +503,22 @@ func (s *sqliteImpl) setup() error {
 		return err
 	}
 	return nil
+}
+
+func NewSQLite() (Database, error) {
+	dbLite, err := sql.Open("sqlite3", "file:puppet-summary.db?_journal_mode=WAL")
+	if err != nil {
+		return nil, fmt.Errorf("error opening database: %w", err)
+	}
+
+	impl := &sqliteImpl{
+		client: dbLite,
+	}
+
+	if err := impl.setup(); err != nil {
+		slog.Error("Error setting up SQLite", slog.String(logging.KeyError, err.Error()))
+		os.Exit(1)
+	}
+
+	return impl, nil
 }

@@ -55,7 +55,9 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{end}}
 
 {{range .SecurityDefinitions}}
-  ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
+  token := r.Header.Get("Authorization")
+  token = strings.TrimPrefix(token, "Bearer ")
+  ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, token)
 {{end}}
 
   {{if .RequiresParamObject}}

@@ -1,4 +1,32 @@
+func Point[T comparable](v T) *T {
+    return &v
+}
 {{range .Types}}
-{{ if .Schema.Description }}{{ toGoComment .Schema.Description .TypeName  }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
-type {{.TypeName}} {{if .IsAlias }}={{end}} {{.Schema.TypeDecl}}
+{{if ne .TypeName .Schema.TypeDecl }}
+{{- if gt (len .Schema.UnionElements) 0 }}
+// {{.TypeName}} defines the model for {{.JsonName}}.
+type {{.TypeName}} = interface{}
+{{- else -}}
+// {{.TypeName}} defines the model for {{.JsonName}}.
+type {{.TypeName}} {{.Schema.TypeDecl}}
+{{- end }}
+{{end}}
+{{- if and (gt (len .Schema.EnumValues) 0) (eq .Schema.GoType "string") }}
+// List of {{ .TypeName }}
+const (
+	{{- $typeName := .TypeName }}
+    {{- range $key, $value := .Schema.EnumValues }}
+    {{ $typeName }}_{{ $value }} {{ $typeName }} = "{{ $value }}"
+    {{- end }}
+)
+
+func (t {{ $typeName }}) IsIn(values ...{{ $typeName }}) bool {
+    for _, v := range values {
+        if t == v {
+            return true
+        }
+    }
+    return false
+}
+{{- end }}
 {{end}}

@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"crypto/sha1"
@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/smallfish/simpleyaml"
 )
@@ -40,8 +41,8 @@ func parseEnvironment(y *simpleyaml.Yaml, out *entities.PuppetReport) error {
 	if !reg.MatchString(envStr) {
 		return errors.New("the submitted 'environment' field failed our security check")
 	}
-	env := entities.Environment(strings.ToUpper(envStr))
-	if !env.Valid() {
+	env := summary.Environment(strings.ToUpper(envStr))
+	if !env.IsIn(summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT, summary.Environment_STAGING) {
 		return fmt.Errorf("invalid environment '%s'", env)
 	}
 	out.Env = env
@@ -86,8 +87,8 @@ func parseStatus(y *simpleyaml.Yaml, out *entities.PuppetReport) error {
 		return errors.New("failed to get 'status' from YAML")
 	}
 
-	state := entities.State(strings.ToUpper(s))
-	if !state.Valid() {
+	state := summary.State(strings.ToUpper(s))
+	if !state.IsIn(summary.State_FAILED, summary.State_CHANGED, summary.State_SKIPPED, summary.State_UNCHANGED) {
 		return fmt.Errorf("invalid state '%s'", state)
 	}
 

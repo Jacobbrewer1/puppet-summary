@@ -9,6 +9,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,40 +19,6 @@ import (
 )
 
 const mongoDatabase = "puppet-summary"
-
-func connectMongoDB(ctx context.Context) {
-	connectionString := os.Getenv(envDbConnStr)
-	if connectionString != "" {
-		slog.Debug("Found MongoDB URI in environment")
-	} else {
-		// Missing environment variable.
-		slog.Error(fmt.Sprintf("No %s environment variable provided", envDbConnStr))
-		os.Exit(1)
-	}
-
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(connectionString).SetServerAPIOptions(serverAPI)
-	opts.SetAppName(mongoDatabase)
-
-	client, err := mongo.Connect(ctx, opts)
-	if err != nil {
-		slog.Error("Error connecting to mongo", slog.String(logging.KeyError, err.Error()))
-		os.Exit(1)
-	} else if client == nil {
-		slog.Error("MongoDB came back nil", slog.String(logging.KeyError, "MongoDB came back nil"))
-		os.Exit(1)
-	}
-
-	DB = &mongodbImpl{
-		client: client,
-	}
-
-	slog.Debug("Connected to MongoDB")
-}
 
 type mongodbImpl struct {
 	// client is the database.
@@ -82,7 +49,7 @@ func (m *mongodbImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 	return int(res.DeletedCount), nil
 }
 
-func (m *mongodbImpl) GetEnvironments(ctx context.Context) ([]entities.Environment, error) {
+func (m *mongodbImpl) GetEnvironments(ctx context.Context) ([]summary.Environment, error) {
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
 	// Start the prometheus metrics.
@@ -95,13 +62,13 @@ func (m *mongodbImpl) GetEnvironments(ctx context.Context) ([]entities.Environme
 
 	t.ObserveDuration()
 
-	environments := make([]entities.Environment, 0)
+	environments := make([]summary.Environment, 0)
 	for _, env := range cursor {
 		// Convert the cursor to a string.
 		envString := fmt.Sprintf("%s", env)
 
 		// Convert the string to an environment.
-		environment := entities.Environment(envString)
+		environment := summary.Environment(envString)
 
 		// Add the environment to the slice.
 		environments = append(environments, environment)
@@ -110,7 +77,7 @@ func (m *mongodbImpl) GetEnvironments(ctx context.Context) ([]entities.Environme
 	return environments, nil
 }
 
-func (m *mongodbImpl) GetHistory(ctx context.Context, environment entities.Environment) ([]*entities.PuppetHistory, error) {
+func (m *mongodbImpl) GetHistory(ctx context.Context, environment ...summary.Environment) ([]*entities.PuppetHistory, error) {
 	// First get the distinct dates from the database.
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
@@ -118,8 +85,10 @@ func (m *mongodbImpl) GetHistory(ctx context.Context, environment entities.Envir
 	t := prometheus.NewTimer(DatabaseLatency.WithLabelValues("get_history"))
 
 	envFilter := bson.M{}
-	if environment != entities.EnvAll {
-		envFilter = bson.M{"env": environment}
+	if environment != nil {
+		envFilter["env"] = bson.M{
+			"$in": environment,
+		}
 	}
 
 	cursor, err := collection.Distinct(ctx, "exec_time", envFilter)
@@ -195,7 +164,7 @@ func (m *mongodbImpl) GetHistory(ctx context.Context, environment entities.Envir
 		}
 
 		// For each state, count the number of reports.
-		for _, state := range entities.States {
+		for _, state := range []summary.State{summary.State_CHANGED, summary.State_FAILED, summary.State_SKIPPED, summary.State_UNCHANGED} {
 			f := filter
 			f["state"] = state
 
@@ -287,7 +256,7 @@ func (m *mongodbImpl) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (m *mongodbImpl) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
+func (m *mongodbImpl) GetRunsByState(ctx context.Context, states ...summary.State) ([]*entities.PuppetRun, error) {
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
 	// Start the prometheus metrics.
@@ -352,4 +321,35 @@ func (m *mongodbImpl) SaveRun(ctx context.Context, report *entities.PuppetReport
 		return fmt.Errorf("error saving run: %w", err)
 	}
 	return nil
+}
+
+func NewMongo(ctx context.Context) (Database, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	connectionString := os.Getenv(envDbConnStr)
+	if connectionString != "" {
+		slog.Debug("Found MongoDB URI in environment")
+	} else {
+		// Missing environment variable.
+		return nil, fmt.Errorf("missing environment variable: %s", envDbConnStr)
+	}
+
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	opts := options.Client().ApplyURI(connectionString).SetServerAPIOptions(serverAPI)
+	opts.SetAppName(mongoDatabase)
+
+	client, err := mongo.Connect(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("connect to MongoDB: %w", err)
+	} else if client == nil {
+		return nil, errors.New("nil MongoDB client")
+	}
+
+	impl := &mongodbImpl{
+		client: client,
+	}
+
+	return impl, nil
 }

@@ -9,41 +9,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/go-sql-driver/mysql"
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-func connectMysql() {
-	connectionString := os.Getenv(envDbConnStr)
-	if connectionString != "" {
-		slog.Debug("Found MySQL URI in environment")
-	} else {
-		// Missing environment variable.
-		slog.Error(fmt.Sprintf("No %s environment variable provided", envDbConnStr))
-		os.Exit(1)
-	}
-
-	d, err := sql.Open("mysql", connectionString)
-	if err != nil {
-		slog.Error("Error connecting to mysql", slog.String(logging.KeyError, err.Error()))
-		os.Exit(1)
-	}
-
-	impl := &mysqlImpl{
-		client: d,
-	}
-
-	if err := impl.setup(); err != nil {
-		slog.Error("Error setting up mysql", slog.String(logging.KeyError, err.Error()))
-		os.Exit(1)
-	}
-
-	DB = impl
-
-	slog.Debug("Connected to mysql")
-}
 
 type mysqlImpl struct {
 	// client is the database.
@@ -82,7 +53,7 @@ func (m *mysqlImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 	return int(affected), nil
 }
 
-func (m *mysqlImpl) GetEnvironments(ctx context.Context) ([]entities.Environment, error) {
+func (m *mysqlImpl) GetEnvironments(ctx context.Context) ([]summary.Environment, error) {
 	sqlStmt := `
 	SELECT DISTINCT environment 
 	FROM reports;
@@ -107,9 +78,9 @@ func (m *mysqlImpl) GetEnvironments(ctx context.Context) ([]entities.Environment
 		}
 	}(rows)
 
-	envs := make([]entities.Environment, 0)
+	envs := make([]summary.Environment, 0)
 	for rows.Next() {
-		var env entities.Environment
+		var env summary.Environment
 		if err := rows.Scan(&env); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
 		}
@@ -119,14 +90,21 @@ func (m *mysqlImpl) GetEnvironments(ctx context.Context) ([]entities.Environment
 	return envs, nil
 }
 
-func (m *mysqlImpl) GetHistory(ctx context.Context, environment entities.Environment) ([]*entities.PuppetHistory, error) {
+func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Environment) ([]*entities.PuppetHistory, error) {
 	res := make([]*entities.PuppetHistory, 0)
 
 	limit := 30
 
 	query := "SELECT DISTINCT DATE(executed_at) FROM reports;"
-	if environment != entities.EnvAll {
-		query = fmt.Sprintf("%s WHERE environment = '%s'", query, environment)
+	if len(environment) > 0 {
+		query = "SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ("
+		for i, env := range environment {
+			query += "'" + string(env) + "'"
+			if i != len(environment)-1 {
+				query += ","
+			}
+		}
+		query += ");"
 	}
 
 	stmt, err := m.client.PrepareContext(ctx, query)
@@ -186,9 +164,17 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment entities.Environ
 		endTime := startTime.AddDate(0, 0, 1)
 
 		locQuery := "SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ?"
-		if environment != entities.EnvAll {
-			locQuery += " AND environment = '" + environment.String() + "'"
+		if len(environment) > 0 {
+			locQuery += " AND environment IN ("
+			for i, env := range environment {
+				locQuery += "'" + string(env) + "'"
+				if i != len(environment)-1 {
+					locQuery += ","
+				}
+			}
+			locQuery += ")"
 		}
+
 		locQuery += " GROUP BY state;"
 		stmt, err = m.client.PrepareContext(ctx, locQuery)
 		if err != nil {
@@ -201,20 +187,20 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment entities.Environ
 		}
 
 		for rows.Next() {
-			var state entities.State
+			var state summary.State
 			var count int
 
 			err = rows.Scan(&state, &count)
 			if err != nil {
 				return nil, errors.New("failed to scan SQL")
 			}
-			if state.IsIn(entities.StateChanged) {
+			if state.IsIn(summary.State_CHANGED) {
 				x.Changed += count
 			}
-			if state.IsIn(entities.StateUnchanged) {
+			if state.IsIn(summary.State_UNCHANGED) {
 				x.Unchanged += count
 			}
-			if state.IsIn(entities.StateFailed) {
+			if state.IsIn(summary.State_FAILED) {
 				x.Failed += count
 			}
 		}
@@ -321,7 +307,7 @@ ORDER by executed_at DESC;
 	return reports, nil
 }
 
-func (m *mysqlImpl) GetRunsByState(ctx context.Context, states ...entities.State) ([]*entities.PuppetRun, error) {
+func (m *mysqlImpl) GetRunsByState(ctx context.Context, states ...summary.State) ([]*entities.PuppetRun, error) {
 	sqlStmt := `
 	SELECT hash,
 		   fqdn,
@@ -345,7 +331,7 @@ func (m *mysqlImpl) GetRunsByState(ctx context.Context, states ...entities.State
 	// Convert the states to a string csv.
 	statesStr := ""
 	for i, state := range states {
-		statesStr += state.String()
+		statesStr += string(state)
 		if i != len(states)-1 {
 			statesStr += ","
 		}
@@ -520,4 +506,29 @@ CREATE TABLE IF NOT EXISTS reports
 		return err
 	}
 	return nil
+}
+
+func NewMySQL() (Database, error) {
+	connectionString := os.Getenv(envDbConnStr)
+	if connectionString != "" {
+		slog.Debug("Found MySQL URI in environment")
+	} else {
+		// Missing environment variable.
+		return nil, fmt.Errorf("no %s environment variable provided", envDbConnStr)
+	}
+
+	d, err := sql.Open("mysql", connectionString)
+	if err != nil {
+		return nil, fmt.Errorf("error opening mysql: %w", err)
+	}
+
+	impl := &mysqlImpl{
+		client: d,
+	}
+
+	if err := impl.setup(); err != nil {
+		return nil, fmt.Errorf("error setting up database: %w", err)
+	}
+
+	return impl, nil
 }

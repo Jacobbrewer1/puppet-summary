@@ -3,6 +3,7 @@ package dataaccess
 import (
 	"context"
 	"database/sql"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"regexp"
 	"testing"
 	"time"
@@ -108,10 +109,10 @@ func (s *mysqlSuite) TestGetEnvironments() {
 	environments, err := s.dbObject.GetEnvironments(context.Background())
 	s.Require().NoError(err)
 
-	s.Require().Equal([]entities.Environment{
-		entities.EnvProduction,
-		entities.EnvStaging,
-		entities.EnvDevelopment,
+	s.Require().Equal([]summary.Environment{
+		summary.Environment_PRODUCTION,
+		summary.Environment_STAGING,
+		summary.Environment_DEVELOPMENT,
 	}, environments)
 }
 
@@ -187,7 +188,7 @@ func (s *mysqlSuite) TestGetHistoryAllEnvs() {
 
 	s.mockDB.ExpectClose()
 
-	history, err := s.dbObject.GetHistory(context.Background(), entities.EnvAll)
+	history, err := s.dbObject.GetHistory(context.Background(), summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetHistory{
@@ -284,7 +285,7 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 
 	s.mockDB.ExpectClose()
 
-	history, err := s.dbObject.GetHistory(context.Background(), entities.EnvProduction)
+	history, err := s.dbObject.GetHistory(context.Background(), summary.Environment_PRODUCTION)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetHistory{
@@ -348,8 +349,8 @@ WHERE hash = ?;
 	s.Require().Equal(&entities.PuppetReport{
 		ID:       id,
 		Fqdn:     "fqdn",
-		Env:      entities.EnvProduction,
-		State:    entities.StateChanged,
+		Env:      summary.Environment_PRODUCTION,
+		State:    summary.State_CHANGED,
 		ExecTime: entities.Datetime(now),
 		Runtime:  entities.Duration(10 * time.Second),
 		Failed:   1,
@@ -402,8 +403,8 @@ ORDER by executed_at DESC;
 		{
 			ID:       id1,
 			Fqdn:     "fqdn",
-			Env:      entities.EnvProduction,
-			State:    entities.StateChanged,
+			Env:      summary.Environment_PRODUCTION,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(10 * time.Second),
 			Failed:   1,
@@ -414,8 +415,8 @@ ORDER by executed_at DESC;
 		{
 			ID:       id2,
 			Fqdn:     "fqdn",
-			Env:      entities.EnvDevelopment,
-			State:    entities.StateChanged,
+			Env:      summary.Environment_DEVELOPMENT,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(11 * time.Second),
 			Failed:   1,
@@ -456,21 +457,21 @@ func (s *mysqlSuite) TestGetRunsByStateSingleState() {
 
 	s.mockDB.ExpectClose()
 
-	report, err := s.dbObject.GetRunsByState(ctx, entities.StateChanged)
+	report, err := s.dbObject.GetRunsByState(ctx, summary.State_CHANGED)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetRun{
 		{
 			ID:       "hash1",
 			Fqdn:     "fqdn1",
-			State:    entities.StateChanged,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(10 * time.Second),
 		},
 		{
 			ID:       "hash2",
 			Fqdn:     "fqdn2",
-			State:    entities.StateChanged,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(11 * time.Second),
 		},
@@ -507,21 +508,21 @@ func (s *mysqlSuite) TestGetRunsByStateMultipleStates() {
 
 	s.mockDB.ExpectClose()
 
-	report, err := s.dbObject.GetRunsByState(ctx, entities.StateChanged, entities.StateUnchanged)
+	report, err := s.dbObject.GetRunsByState(ctx, summary.State_CHANGED, summary.State_UNCHANGED)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetRun{
 		{
 			ID:       "hash1",
 			Fqdn:     "fqdn1",
-			State:    entities.StateChanged,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(10 * time.Second),
 		},
 		{
 			ID:       "hash2",
 			Fqdn:     "fqdn2",
-			State:    entities.StateUnchanged,
+			State:    summary.State_UNCHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(11 * time.Second),
 		},
@@ -564,18 +565,18 @@ func (s *mysqlSuite) TestGetRuns() {
 		{
 			ID:       "hash1",
 			Fqdn:     "fqdn1",
-			State:    entities.StateChanged,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(10 * time.Second),
-			Env:      entities.EnvProduction,
+			Env:      summary.Environment_PRODUCTION,
 		},
 		{
 			ID:       "hash2",
 			Fqdn:     "fqdn2",
-			State:    entities.StateUnchanged,
+			State:    summary.State_UNCHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(11 * time.Second),
-			Env:      entities.EnvDevelopment,
+			Env:      summary.Environment_DEVELOPMENT,
 		},
 	}, report)
 }
@@ -615,8 +616,8 @@ func (s *mysqlSuite) TestSaveRunSuccess() {
 	err = s.dbObject.SaveRun(ctx, &entities.PuppetReport{
 		ID:       "hash",
 		Fqdn:     "fqdn",
-		Env:      entities.EnvProduction,
-		State:    entities.StateChanged,
+		Env:      summary.Environment_PRODUCTION,
+		State:    summary.State_CHANGED,
 		YamlFile: "yaml_file",
 		ExecTime: entities.Datetime(now),
 		Runtime:  entities.Duration(10 * time.Second),
@@ -666,8 +667,8 @@ func (s *mysqlSuite) TestSaveRunDuplicate() {
 	err = s.dbObject.SaveRun(ctx, &entities.PuppetReport{
 		ID:       "hash",
 		Fqdn:     "fqdn",
-		Env:      entities.EnvProduction,
-		State:    entities.StateChanged,
+		Env:      summary.Environment_PRODUCTION,
+		State:    summary.State_CHANGED,
 		YamlFile: "yaml_file",
 		ExecTime: entities.Datetime(now),
 		Runtime:  entities.Duration(10 * time.Second),

@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"os"
@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/smallfish/simpleyaml"
 	"github.com/stretchr/testify/suite"
@@ -83,7 +84,7 @@ func (s *ParsePuppetReportSuite) TestParsePuppetVersion() {
 func (s *ParsePuppetReportSuite) TestParseEnvironment() {
 	err := parseEnvironment(s.sy, s.report)
 	s.NoError(err, "Unexpected error parsing environment")
-	s.Equal(entities.EnvProduction, s.report.Env)
+	s.Equal(summary.Environment_PRODUCTION, s.report.Env)
 }
 
 func (s *ParsePuppetReportSuite) TestParseTime() {
@@ -97,7 +98,7 @@ func (s *ParsePuppetReportSuite) TestParseTime() {
 func (s *ParsePuppetReportSuite) TestParseStatus() {
 	err := parseStatus(s.sy, s.report)
 	s.NoError(err, "Unexpected error parsing status")
-	s.Equal(entities.StateChanged, s.report.State)
+	s.Equal(summary.State_CHANGED, s.report.State)
 }
 
 func (s *ParsePuppetReportSuite) TestParseRuntime() {
