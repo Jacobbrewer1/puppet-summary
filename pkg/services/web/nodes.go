@@ -4,10 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
-	"github.com/gorilla/mux"
 	"html/template"
 	"io"
 	"log/slog"
@@ -15,6 +11,11 @@ import (
 	"os"
 	"sort"
 	"strconv"
+
+	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
+	"github.com/gorilla/mux"
 )
 
 func (s service) nodeFqdnHandler(w http.ResponseWriter, r *http.Request) {

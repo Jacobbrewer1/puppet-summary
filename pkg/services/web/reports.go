@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/services/parser"
 	"html/template"
 	"io"
 	"log/slog"
@@ -18,6 +17,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/parser"
 	"github.com/gorilla/mux"
 )
 

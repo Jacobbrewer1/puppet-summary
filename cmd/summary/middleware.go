@@ -3,15 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"net/http"
+	"runtime/debug"
+	"time"
+
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/messages"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/gorilla/mux"
-	"log/slog"
-	"net/http"
-	"runtime/debug"
-	"time"
 )
 
 func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.HandlerFunc {

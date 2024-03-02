@@ -1,9 +1,10 @@
 package web
 
 import (
+	"net/http"
+
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 type service struct {

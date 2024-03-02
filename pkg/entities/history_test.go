@@ -1,10 +1,10 @@
 package entities
 
 import (
-	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"testing"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -3,10 +3,10 @@ package dataaccess
 import (
 	"context"
 	"fmt"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"strings"
 	"time"
 
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 )
 
