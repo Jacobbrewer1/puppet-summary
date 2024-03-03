@@ -103,7 +103,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 				return nil, fmt.Errorf("invalid environment: %s", env)
 			}
 
-			whereClause += "'" + string(env) + "'"
+			whereClause += "'%s'"
 			if i != len(environment)-1 {
 				whereClause += ","
 			}
@@ -120,7 +120,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 		return nil, fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	rows, err := stmt.QueryContext(ctx)
+	rows, err := stmt.QueryContext(ctx, environment)
 	if err != nil {
 		return nil, fmt.Errorf("error executing statement: %w", err)
 	}
