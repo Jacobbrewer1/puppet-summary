@@ -52,14 +52,14 @@ func (s *GetAllNodesSuite) TestGetAllNodes() {
 		{
 			Fqdn:     "test2",
 			Env:      summary.Environment_STAGING,
-			ExecTime: entities.Datetime(now),
+			ExecTime: entities.Datetime(now.Add(10 * time.Second)),
 			Runtime:  entities.Duration(10 * time.Second),
 			State:    summary.State_UNCHANGED,
 		},
 		{
 			Fqdn:     "test3",
 			Env:      summary.Environment_DEVELOPMENT,
-			ExecTime: entities.Datetime(now),
+			ExecTime: entities.Datetime(now.Add(20 * time.Second)),
 			Runtime:  entities.Duration(10 * time.Second),
 			State:    summary.State_CHANGED,
 		},
@@ -78,7 +78,7 @@ func (s *GetAllNodesSuite) TestGetAllNodes() {
 	s.Equal("application/json", w.Header().Get("Content-Type"))
 
 	// Compare the response.
-	expected := "[{\"env\":\"PRODUCTION\",\"exec_time\":\"" + now.Format(time.RFC3339) + "\",\"fqdn\":\"test1\",\"runtime\":\"10s\",\"state\":\"SKIPPED\"},{\"env\":\"STAGING\",\"exec_time\":\"" + now.Format(time.RFC3339) + "\",\"fqdn\":\"test2\",\"runtime\":\"10s\",\"state\":\"UNCHANGED\"},{\"env\":\"DEVELOPMENT\",\"exec_time\":\"" + now.Format(time.RFC3339) + "\",\"fqdn\":\"test3\",\"runtime\":\"10s\",\"state\":\"CHANGED\"}]\n"
+	expected := "[{\"env\":\"PRODUCTION\",\"exec_time\":\"" + now.Format(time.RFC3339) + "\",\"fqdn\":\"test1\",\"runtime\":\"10s\",\"state\":\"SKIPPED\"},{\"env\":\"STAGING\",\"exec_time\":\"" + now.Add(10*time.Second).Format(time.RFC3339) + "\",\"fqdn\":\"test2\",\"runtime\":\"10s\",\"state\":\"UNCHANGED\"},{\"env\":\"DEVELOPMENT\",\"exec_time\":\"" + now.Add(20*time.Second).Format(time.RFC3339) + "\",\"fqdn\":\"test3\",\"runtime\":\"10s\",\"state\":\"CHANGED\"}]\n"
 	s.Require().Equal(expected, w.Body.String())
 
 	s.db.AssertExpectations(s.T())
