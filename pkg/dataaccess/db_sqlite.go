@@ -175,6 +175,16 @@ func (s *sqliteImpl) GetHistory(ctx context.Context, environment ...summary.Envi
 		endTime := startTime.AddDate(0, 0, 1)
 
 		locQuery := "SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ?"
+		if len(environment) > 0 {
+			locQuery += " AND environment IN ("
+			for i := range environment {
+				locQuery += "?"
+				if i != len(environment)-1 {
+					locQuery += ","
+				}
+			}
+			locQuery += ")"
+		}
 
 		locWhere := make([]any, 0)
 		locWhere = append(locWhere, startTime.Format(time.DateOnly))
