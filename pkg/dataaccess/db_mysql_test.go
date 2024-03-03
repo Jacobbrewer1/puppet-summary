@@ -214,7 +214,7 @@ func (s *mysqlSuite) TestGetHistoryAllEnvs() {
 }
 
 func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
-	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ('PRODUCTION','DEVELOPMENT');`)
+	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ('%s','%s');`)
 
 	// Expect the history to be retrieved.
 	s.mockDB.ExpectPrepare(expSql1)
@@ -311,7 +311,7 @@ func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
 }
 
 func (s *mysqlSuite) TestGetHistorySingleEnv() {
-	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ('PRODUCTION');`)
+	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ('%s');`)
 
 	// Expect the history to be retrieved.
 	s.mockDB.ExpectPrepare(expSql1)

@@ -97,6 +97,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 
 	// Check the environments are valid.
 	whereClause := ""
+	envStrSlice := make([]any, len(environment))
 	if len(environment) > 0 {
 		for i, env := range environment {
 			if !env.IsIn(summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT) {
@@ -107,6 +108,8 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 			if i != len(environment)-1 {
 				whereClause += ","
 			}
+
+			envStrSlice[i] = string(env)
 		}
 	}
 
@@ -120,7 +123,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 		return nil, fmt.Errorf("error preparing statement: %w", err)
 	}
 
-	rows, err := stmt.QueryContext(ctx, environment)
+	rows, err := stmt.QueryContext(ctx, envStrSlice...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing statement: %w", err)
 	}
