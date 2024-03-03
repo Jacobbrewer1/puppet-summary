@@ -96,7 +96,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 	limit := 30
 
 	// Check the environments are valid.
-	whereClause := "WHERE environment IN ("
+	whereClause := ""
 	if len(environment) > 0 {
 		for i, env := range environment {
 			if !env.IsIn(summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT) {
@@ -108,7 +108,6 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 				whereClause += ","
 			}
 		}
-		whereClause += ");"
 	}
 
 	query := "SELECT DISTINCT DATE(executed_at) FROM reports;"
