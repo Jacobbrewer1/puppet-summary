@@ -104,7 +104,6 @@ func (s service) GetAllNodes(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(nodes); err != nil {
 		slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 	}
-	return
 }
 
 func (s service) GetAllNodesByEnvironment(w http.ResponseWriter, r *http.Request, env summary.Environment) {
@@ -198,7 +197,6 @@ func (s service) GetAllNodesByEnvironment(w http.ResponseWriter, r *http.Request
 	if err := json.NewEncoder(w).Encode(nodes); err != nil {
 		slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 	}
-	return
 }
 
 func (s service) GetNodeByFqdn(w http.ResponseWriter, r *http.Request, fqdn string) {

@@ -54,7 +54,6 @@ func (s service) PurgeData(purgeDays int) error {
 		slog.Info("Purge days set to 0, purging all data")
 		from = time.Now().AddDate(0, 0, 1)
 		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
-		return nil
 	}
 
 	ctx := context.Background()
