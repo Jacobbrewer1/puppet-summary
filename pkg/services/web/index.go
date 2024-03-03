@@ -81,7 +81,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		return filteredNodes[i].TimeSince.Time() < filteredNodes[j].TimeSince.Time()
 	})
 
-	history := make([]*entities.PuppetHistory, 0)
+	var history []*entities.PuppetHistory
 	if envOk {
 		history, err = s.db.GetHistory(r.Context(), env)
 	} else {
