@@ -133,7 +133,7 @@ func (s *gcsImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 		fileName := attrs.Name
 
 		// Ignore non-parser files.
-		if !strings.HasSuffix(fileName, ".parser") {
+		if !strings.HasSuffix(fileName, ".yaml") {
 			continue
 		}
 
@@ -141,7 +141,7 @@ func (s *gcsImpl) Purge(ctx context.Context, from time.Time) (int, error) {
 		fileName = fileName[strings.LastIndex(fileName, "/")+1:]
 
 		// Remove the file extension.
-		fileName = fileName[:len(fileName)-len(".parser")]
+		fileName = fileName[:len(fileName)-len(".yaml")]
 
 		// Parse the file date from the file name.
 		fileDate, err := time.Parse(time.RFC3339, fileName)

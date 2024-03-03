@@ -58,7 +58,7 @@ func (n *PuppetReportSummary) CalculateTimeSince() {
 }
 
 func (n *PuppetReportSummary) ReportFilePath() string {
-	path := filepath.Join("reports", string(n.Env), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".parser")
+	path := filepath.Join("reports", string(n.Env), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".yaml")
 	n.YamlFile = path
 	return path
 }
@@ -119,7 +119,7 @@ type PuppetReport struct {
 }
 
 func (n *PuppetReport) ReportFilePath() string {
-	path := filepath.Join("reports", string(n.Env), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".parser")
+	path := filepath.Join("reports", string(n.Env), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".yaml")
 	n.YamlFile = path
 	return path
 }
