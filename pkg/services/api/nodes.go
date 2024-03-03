@@ -101,7 +101,7 @@ func (s service) GetAllNodes(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(nodes); err != nil {
+	if err := json.NewEncoder(w).Encode(mappedNodes); err != nil {
 		slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 	}
 }
@@ -194,7 +194,7 @@ func (s service) GetAllNodesByEnvironment(w http.ResponseWriter, r *http.Request
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(nodes); err != nil {
+	if err := json.NewEncoder(w).Encode(mappedNodes); err != nil {
 		slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 	}
 }
@@ -224,9 +224,25 @@ func (s service) GetNodeByFqdn(w http.ResponseWriter, r *http.Request, fqdn stri
 		return reps[i].ExecTime.Time().Before(reps[j].ExecTime.Time())
 	})
 
+	resp := make([]*summary.PuppetReportSummary, 0, len(reps))
+	for _, rep := range reps {
+		resp = append(resp, &summary.PuppetReportSummary{
+			Changed:  &rep.Changed,
+			Env:      &rep.Env,
+			ExecTime: summary.Point(rep.ExecTime.Time()),
+			Failed:   &rep.Failed,
+			Fqdn:     &rep.Fqdn,
+			Id:       &rep.ID,
+			Runtime:  summary.Point(rep.Runtime.String()),
+			Skipped:  &rep.Skipped,
+			State:    &rep.State,
+			Total:    &rep.Total,
+		})
+	}
+
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(reps); err != nil {
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 	}
 }

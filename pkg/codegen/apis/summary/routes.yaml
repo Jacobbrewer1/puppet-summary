@@ -163,11 +163,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Get a node by fqdn
+          description: Get reports by fqdn
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/node'
+                type: object
+                properties:
+                  nodes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/puppetReportSummary'
         '400':
           description: Bad request
           content:
@@ -256,6 +261,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Resource'
+
+    puppetReportSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        fqdn:
+          type: string
+        env:
+          $ref: '#/components/schemas/environment'
+        state:
+          $ref: '#/components/schemas/state'
+        exec_time:
+          type: string
+          format: date-time
+          example: '2024-02-13T10:00:09Z'
+        runtime:
+          type: string
+          example: 23s
+        failed:
+          type: integer
+        changed:
+          type: integer
+        skipped:
+          type: integer
+        total:
+          type: integer
 
     Resource:
       type: object
