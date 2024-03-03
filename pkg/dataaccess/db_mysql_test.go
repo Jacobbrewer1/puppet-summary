@@ -214,7 +214,7 @@ func (s *mysqlSuite) TestGetHistoryAllEnvs() {
 }
 
 func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
-	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ('%s','%s');`)
+	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN (?,?);`)
 
 	// Expect the history to be retrieved.
 	s.mockDB.ExpectPrepare(expSql1)
@@ -227,7 +227,7 @@ func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)
 
-	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment IN ('PRODUCTION','DEVELOPMENT') GROUP BY state;`)
+	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment IN (?,?) GROUP BY state;`)
 
 	from1, err := time.Parse(time.DateTime, "2023-02-21 00:00:00")
 	s.Require().NoError(err)
@@ -244,7 +244,7 @@ func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
 		AddRow("UNCHANGED", 3)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from1.Format(time.DateOnly), to1.Format(time.DateOnly)).
+		WithArgs(from1.Format(time.DateOnly), to1.Format(time.DateOnly), summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT).
 		WillReturnRows(rows2)
 
 	from2, err := time.Parse(time.DateTime, "2023-02-22 00:00:00")
@@ -262,7 +262,7 @@ func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
 		AddRow("UNCHANGED", 6)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from2.Format(time.DateOnly), to2.Format(time.DateOnly)).
+		WithArgs(from2.Format(time.DateOnly), to2.Format(time.DateOnly), summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT).
 		WillReturnRows(rows3)
 
 	from3, err := time.Parse(time.DateTime, "2023-02-23 00:00:00")
@@ -280,7 +280,7 @@ func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
 		AddRow("UNCHANGED", 7)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from3.Format(time.DateOnly), to3.Format(time.DateOnly)).
+		WithArgs(from3.Format(time.DateOnly), to3.Format(time.DateOnly), summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT).
 		WillReturnRows(rows4)
 
 	s.mockDB.ExpectClose()
@@ -311,7 +311,7 @@ func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
 }
 
 func (s *mysqlSuite) TestGetHistorySingleEnv() {
-	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ('%s');`)
+	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN (?);`)
 
 	// Expect the history to be retrieved.
 	s.mockDB.ExpectPrepare(expSql1)
@@ -324,7 +324,7 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)
 
-	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment IN ('PRODUCTION') GROUP BY state;`)
+	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment IN (?) GROUP BY state;`)
 
 	from1, err := time.Parse(time.DateTime, "2023-02-21 00:00:00")
 	s.Require().NoError(err)
@@ -341,7 +341,7 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 		AddRow("UNCHANGED", 3)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from1.Format(time.DateOnly), to1.Format(time.DateOnly)).
+		WithArgs(from1.Format(time.DateOnly), to1.Format(time.DateOnly), summary.Environment_PRODUCTION).
 		WillReturnRows(rows2)
 
 	from2, err := time.Parse(time.DateTime, "2023-02-22 00:00:00")
@@ -359,7 +359,7 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 		AddRow("UNCHANGED", 6)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from2.Format(time.DateOnly), to2.Format(time.DateOnly)).
+		WithArgs(from2.Format(time.DateOnly), to2.Format(time.DateOnly), summary.Environment_PRODUCTION).
 		WillReturnRows(rows3)
 
 	from3, err := time.Parse(time.DateTime, "2023-02-23 00:00:00")
@@ -377,7 +377,7 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 		AddRow("UNCHANGED", 7)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from3.Format(time.DateOnly), to3.Format(time.DateOnly)).
+		WithArgs(from3.Format(time.DateOnly), to3.Format(time.DateOnly), summary.Environment_PRODUCTION).
 		WillReturnRows(rows4)
 
 	s.mockDB.ExpectClose()

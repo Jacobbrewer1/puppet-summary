@@ -104,7 +104,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 				return nil, fmt.Errorf("invalid environment: %s", env)
 			}
 
-			whereClause += "'%s'"
+			whereClause += "?"
 			if i != len(environment)-1 {
 				whereClause += ","
 			}
@@ -177,8 +177,8 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 		locQuery := "SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ?"
 		if len(environment) > 0 {
 			locQuery += " AND environment IN ("
-			for i, env := range environment {
-				locQuery += "'" + string(env) + "'"
+			for i := range environment {
+				locQuery += "?"
 				if i != len(environment)-1 {
 					locQuery += ","
 				}
@@ -192,7 +192,14 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 			return nil, fmt.Errorf("error preparing statement: %w", err)
 		}
 
-		rows, err = stmt.QueryContext(ctx, startTime.Format(time.DateOnly), endTime.Format(time.DateOnly))
+		locWhere := make([]any, 0)
+		locWhere = append(locWhere, startTime.Format(time.DateOnly))
+		locWhere = append(locWhere, endTime.Format(time.DateOnly))
+		if len(environment) > 0 {
+			locWhere = append(locWhere, envStrSlice...)
+		}
+
+		rows, err = stmt.QueryContext(ctx, locWhere...)
 		if err != nil {
 			return nil, fmt.Errorf("error executing statement: %w", err)
 		}
