@@ -33,11 +33,10 @@ func (s *GetAllNodesSuite) SetupTest() {
 }
 
 func (s *GetAllNodesSuite) TearDownTest() {
-	s.db.AssertExpectations(s.T())
 	s.db = nil
 }
 
-func (s *GetAllNodesSuite) TestIndexHandlerAPI() {
+func (s *GetAllNodesSuite) TestGetAllNodes() {
 	m := s.db
 
 	now := time.Now().UTC()
@@ -65,8 +64,7 @@ func (s *GetAllNodesSuite) TestIndexHandlerAPI() {
 
 	// Test the index handler with the API.
 	m.On("GetRuns", mock.AnythingOfType("context.backgroundCtx")).Return(runs, nil).Once()
-	m.On("GetHistory", mock.AnythingOfType("context.backgroundCtx"), summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT).Return([]*entities.PuppetHistory{}, nil).Once()
-	m.On("GetEnvironments", mock.AnythingOfType("context.backgroundCtx")).Return([]summary.Environment{summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT}, nil).Once()
+	m.On("GetHistory", mock.AnythingOfType("context.backgroundCtx"), []summary.Environment(nil)).Return([]*entities.PuppetHistory{}, nil).Once()
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/nodes", nil)
@@ -79,4 +77,6 @@ func (s *GetAllNodesSuite) TestIndexHandlerAPI() {
 	// Compare the response.
 	expected := "[{\"fqdn\":\"test1\",\"env\":\"PRODUCTION\",\"state\":\"\",\"exec_time\":\"" + now.Format(time.RFC3339) + "\",\"runtime\":\"10s\"},{\"fqdn\":\"test2\",\"env\":\"STAGING\",\"state\":\"\",\"exec_time\":\"" + now.Format(time.RFC3339) + "\",\"runtime\":\"10s\"},{\"fqdn\":\"test3\",\"env\":\"PRODUCTION\",\"state\":\"\",\"exec_time\":\"" + now.Format(time.RFC3339) + "\",\"runtime\":\"10s\"}]\n"
 	s.Require().Equal(expected, w.Body.String())
+
+	s.db.AssertExpectations(s.T())
 }

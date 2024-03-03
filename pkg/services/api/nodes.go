@@ -52,7 +52,7 @@ func (s service) GetAllNodes(w http.ResponseWriter, r *http.Request) {
 		return nodes[i].TimeSince.Time() < nodes[j].TimeSince.Time()
 	})
 
-	history, err := s.r.GetHistory(r.Context(), summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT)
+	history, err := s.r.GetHistory(r.Context())
 	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
 		slog.Error("Error getting history", slog.String(logging.KeyError, err.Error()))
 		// Respond with 500 internal server error.

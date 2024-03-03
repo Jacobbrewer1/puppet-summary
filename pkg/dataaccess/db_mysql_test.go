@@ -188,7 +188,104 @@ func (s *mysqlSuite) TestGetHistoryAllEnvs() {
 
 	s.mockDB.ExpectClose()
 
-	history, err := s.dbObject.GetHistory(context.Background(), summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT)
+	history, err := s.dbObject.GetHistory(context.Background())
+	s.Require().NoError(err)
+
+	s.Require().Equal([]*entities.PuppetHistory{
+		{
+			Date:      "2023-02-21",
+			Changed:   5,
+			Failed:    0,
+			Unchanged: 3,
+		},
+		{
+			Date:      "2023-02-22",
+			Changed:   3,
+			Failed:    0,
+			Unchanged: 6,
+		},
+		{
+			Date:      "2023-02-23",
+			Changed:   2,
+			Failed:    0,
+			Unchanged: 7,
+		},
+	}, history)
+}
+
+func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
+	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ('PRODUCTION','DEVELOPMENT');`)
+
+	// Expect the history to be retrieved.
+	s.mockDB.ExpectPrepare(expSql1)
+
+	rows1 := sqlmock.NewRows([]string{"DATE(executed_at)"}).
+		AddRow("2023-02-21T00:00:00Z").
+		AddRow("2023-02-22T00:00:00Z").
+		AddRow("2023-02-23T00:00:00Z")
+
+	s.mockDB.ExpectQuery(expSql1).
+		WillReturnRows(rows1)
+
+	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment IN ('PRODUCTION','DEVELOPMENT') GROUP BY state;`)
+
+	from1, err := time.Parse(time.DateTime, "2023-02-21 00:00:00")
+	s.Require().NoError(err)
+
+	to1, err := time.Parse(time.DateTime, "2023-02-22 00:00:00")
+	s.Require().NoError(err)
+
+	// Expect the history to be retrieved.
+	s.mockDB.ExpectPrepare(expSql2)
+
+	rows2 := sqlmock.NewRows([]string{"state", "COUNT('state')"}).
+		AddRow("CHANGED", 5).
+		AddRow("FAILURE", 1).
+		AddRow("UNCHANGED", 3)
+
+	s.mockDB.ExpectQuery(expSql2).
+		WithArgs(from1.Format(time.DateOnly), to1.Format(time.DateOnly)).
+		WillReturnRows(rows2)
+
+	from2, err := time.Parse(time.DateTime, "2023-02-22 00:00:00")
+	s.Require().NoError(err)
+
+	to2, err := time.Parse(time.DateTime, "2023-02-23 00:00:00")
+	s.Require().NoError(err)
+
+	// Expect the history to be retrieved.
+	s.mockDB.ExpectPrepare(expSql2)
+
+	rows3 := sqlmock.NewRows([]string{"state", "COUNT('state')"}).
+		AddRow("CHANGED", 3).
+		AddRow("FAILURE", 0).
+		AddRow("UNCHANGED", 6)
+
+	s.mockDB.ExpectQuery(expSql2).
+		WithArgs(from2.Format(time.DateOnly), to2.Format(time.DateOnly)).
+		WillReturnRows(rows3)
+
+	from3, err := time.Parse(time.DateTime, "2023-02-23 00:00:00")
+	s.Require().NoError(err)
+
+	to3, err := time.Parse(time.DateTime, "2023-02-24 00:00:00")
+	s.Require().NoError(err)
+
+	// Expect the history to be retrieved.
+	s.mockDB.ExpectPrepare(expSql2)
+
+	rows4 := sqlmock.NewRows([]string{"state", "COUNT('state')"}).
+		AddRow("CHANGED", 2).
+		AddRow("FAILURE", 0).
+		AddRow("UNCHANGED", 7)
+
+	s.mockDB.ExpectQuery(expSql2).
+		WithArgs(from3.Format(time.DateOnly), to3.Format(time.DateOnly)).
+		WillReturnRows(rows4)
+
+	s.mockDB.ExpectClose()
+
+	history, err := s.dbObject.GetHistory(context.Background(), summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetHistory{
@@ -214,7 +311,7 @@ func (s *mysqlSuite) TestGetHistoryAllEnvs() {
 }
 
 func (s *mysqlSuite) TestGetHistorySingleEnv() {
-	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports;`)
+	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ('PRODUCTION');`)
 
 	// Expect the history to be retrieved.
 	s.mockDB.ExpectPrepare(expSql1)
@@ -227,7 +324,7 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)
 
-	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment = 'PRODUCTION' GROUP BY state;`)
+	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment IN ('PRODUCTION') GROUP BY state;`)
 
 	from1, err := time.Parse(time.DateTime, "2023-02-21 00:00:00")
 	s.Require().NoError(err)

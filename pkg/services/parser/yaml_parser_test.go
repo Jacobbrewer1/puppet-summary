@@ -34,12 +34,12 @@ func (s *ParsePuppetReportSuite) SetupTest() {
 	s.Require().NoError(err, "Unexpected error getting working directory")
 	s.Require().NotEmpty(pwd, "Expected a non-empty working directory")
 
-	if !strings.Contains(pwd, "cmd/summary") {
-		pwd += filepath.Join(pwd, "cmd/summary")
+	if !strings.Contains(pwd, "pkg/services/parser") {
+		pwd += filepath.Join(pwd, "pkg/services/parser")
 		s.Require().DirExists(pwd, "Expected a data directory")
 	}
 
-	validYAMLFile := filepath.Join(pwd, "testdata/example.parser")
+	validYAMLFile := filepath.Join(pwd, "testdata/example.yaml")
 	s.Require().FileExists(validYAMLFile, "Expected a valid YAML file")
 
 	s.yamlContent, err = os.ReadFile(validYAMLFile)
