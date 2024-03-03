@@ -95,16 +95,25 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 
 	limit := 30
 
-	query := "SELECT DISTINCT DATE(executed_at) FROM reports;"
+	// Check the environments are valid.
+	whereClause := "WHERE environment IN ("
 	if len(environment) > 0 {
-		query = "SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ("
 		for i, env := range environment {
-			query += "'" + string(env) + "'"
+			if !env.IsIn(summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT) {
+				return nil, fmt.Errorf("invalid environment: %s", env)
+			}
+
+			whereClause += "'" + string(env) + "'"
 			if i != len(environment)-1 {
-				query += ","
+				whereClause += ","
 			}
 		}
-		query += ");"
+		whereClause += ");"
+	}
+
+	query := "SELECT DISTINCT DATE(executed_at) FROM reports;"
+	if len(environment) > 0 {
+		query = "SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN (" + whereClause + ");"
 	}
 
 	stmt, err := m.client.PrepareContext(ctx, query)
