@@ -95,16 +95,27 @@ func (s *sqliteImpl) GetHistory(ctx context.Context, environment ...summary.Envi
 
 	limit := 30
 
+	// Check the environments are valid.
+	whereClause := ""
+	envStrSlice := make([]any, len(environment))
+	if len(environment) > 0 {
+		for i, env := range environment {
+			if !env.IsIn(summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT) {
+				return nil, fmt.Errorf("invalid environment: %s", env)
+			}
+
+			whereClause += "?"
+			if i != len(environment)-1 {
+				whereClause += ","
+			}
+
+			envStrSlice[i] = string(env)
+		}
+	}
+
 	query := "SELECT DISTINCT DATE(executed_at) FROM reports;"
 	if len(environment) > 0 {
-		query = "SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN ("
-		for i, env := range environment {
-			query += "'" + string(env) + "'"
-			if i != len(environment)-1 {
-				query += ","
-			}
-		}
-		query += ");"
+		query = "SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN (" + whereClause + ");"
 	}
 
 	stmt, err := s.client.PrepareContext(ctx, query)
@@ -164,15 +175,12 @@ func (s *sqliteImpl) GetHistory(ctx context.Context, environment ...summary.Envi
 		endTime := startTime.AddDate(0, 0, 1)
 
 		locQuery := "SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ?"
+
+		locWhere := make([]any, 0)
+		locWhere = append(locWhere, startTime.Format(time.DateOnly))
+		locWhere = append(locWhere, endTime.Format(time.DateOnly))
 		if len(environment) > 0 {
-			locQuery += " AND environment IN ("
-			for i, env := range environment {
-				locQuery += "'" + string(env) + "'"
-				if i != len(environment)-1 {
-					locQuery += ","
-				}
-			}
-			locQuery += ")"
+			locWhere = append(locWhere, envStrSlice...)
 		}
 
 		locQuery += " GROUP BY state;"
@@ -181,7 +189,7 @@ func (s *sqliteImpl) GetHistory(ctx context.Context, environment ...summary.Envi
 			return nil, fmt.Errorf("error preparing statement: %w", err)
 		}
 
-		rows, err = stmt.QueryContext(ctx, startTime.Format(time.DateOnly), endTime.Format(time.DateOnly))
+		rows, err = stmt.QueryContext(ctx, locWhere...)
 		if err != nil {
 			return nil, fmt.Errorf("error executing statement: %w", err)
 		}
