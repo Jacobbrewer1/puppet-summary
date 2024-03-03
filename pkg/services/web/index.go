@@ -81,7 +81,12 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		return filteredNodes[i].TimeSince.Time() < filteredNodes[j].TimeSince.Time()
 	})
 
-	history, err := s.db.GetHistory(r.Context(), env)
+	var history []*entities.PuppetHistory
+	if envOk {
+		history, err = s.db.GetHistory(r.Context(), env)
+	} else {
+		history, err = s.db.GetHistory(r.Context())
+	}
 	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
 		slog.Error("Error getting history", slog.String(logging.KeyError, err.Error()))
 		// Respond with 500 internal server error.
