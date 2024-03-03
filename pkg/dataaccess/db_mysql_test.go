@@ -704,7 +704,7 @@ func (s *mysqlSuite) TestSaveRunSuccess() {
 	// Expect the report to be saved.
 	s.mockDB.ExpectPrepare(expSql)
 	s.mockDB.ExpectExec(expSql).
-		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.parser",
+		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
 			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -751,7 +751,7 @@ func (s *mysqlSuite) TestSaveRunDuplicate() {
 	// Expect the report to be saved.
 	s.mockDB.ExpectPrepare(expSql)
 	s.mockDB.ExpectExec(expSql).
-		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.parser",
+		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
 			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
 		WillReturnError(&mysql.MySQLError{
 			Number:   1062, // Duplicate entry

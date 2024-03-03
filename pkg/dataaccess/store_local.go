@@ -166,7 +166,7 @@ func (l *localImpl) Purge(_ context.Context, from time.Time) (int, error) {
 				reportFile = reportFile[strings.LastIndex(reportFile, "/")+1:]
 
 				// Remove the file extension.
-				reportFile = reportFile[:len(reportFile)-len(".parser")]
+				reportFile = reportFile[:len(reportFile)-len(".yaml")]
 
 				// Get the timestamp of the report.
 				timestamp, err := time.Parse(time.RFC3339, reportFile)

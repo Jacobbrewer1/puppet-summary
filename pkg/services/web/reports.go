@@ -79,7 +79,7 @@ func (s service) reportIDHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the yaml file.
 	report, err := parser.ParsePuppetReport(file)
 	if err != nil {
-		slog.Error("Error parsing yaml file", slog.String(logging.KeyError, err.Error()))
+		slog.Error("Error parsing yaml file", slog.String(logging.KeyError, err.Error()), slog.String("file", rep.ReportFilePath()))
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error parsing yaml file")); err != nil {
 			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
