@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/stretchr/testify/suite"
 )
@@ -108,10 +109,10 @@ func (s *sqliteSuite) TestGetEnvironments() {
 	environments, err := s.dbObject.GetEnvironments(context.Background())
 	s.Require().NoError(err)
 
-	s.Require().Equal([]entities.Environment{
-		entities.EnvProduction,
-		entities.EnvStaging,
-		entities.EnvDevelopment,
+	s.Require().Equal([]summary.Environment{
+		summary.Environment_PRODUCTION,
+		summary.Environment_STAGING,
+		summary.Environment_DEVELOPMENT,
 	}, environments)
 }
 
@@ -187,7 +188,104 @@ func (s *sqliteSuite) TestGetHistoryAllEnvs() {
 
 	s.mockDB.ExpectClose()
 
-	history, err := s.dbObject.GetHistory(context.Background(), entities.EnvAll)
+	history, err := s.dbObject.GetHistory(context.Background())
+	s.Require().NoError(err)
+
+	s.Require().Equal([]*entities.PuppetHistory{
+		{
+			Date:      "2023-02-21",
+			Changed:   5,
+			Failed:    0,
+			Unchanged: 3,
+		},
+		{
+			Date:      "2023-02-22",
+			Changed:   3,
+			Failed:    0,
+			Unchanged: 6,
+		},
+		{
+			Date:      "2023-02-23",
+			Changed:   2,
+			Failed:    0,
+			Unchanged: 7,
+		},
+	}, history)
+}
+
+func (s *sqliteSuite) TestGetHistoryMultipleEnv() {
+	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN (?,?);`)
+
+	// Expect the history to be retrieved.
+	s.mockDB.ExpectPrepare(expSql1)
+
+	rows1 := sqlmock.NewRows([]string{"DATE(executed_at)"}).
+		AddRow("2023-02-21").
+		AddRow("2023-02-22").
+		AddRow("2023-02-23")
+
+	s.mockDB.ExpectQuery(expSql1).
+		WillReturnRows(rows1)
+
+	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment IN (?,?) GROUP BY state;`)
+
+	from1, err := time.Parse(time.DateTime, "2023-02-21 00:00:00")
+	s.Require().NoError(err)
+
+	to1, err := time.Parse(time.DateTime, "2023-02-22 00:00:00")
+	s.Require().NoError(err)
+
+	// Expect the history to be retrieved.
+	s.mockDB.ExpectPrepare(expSql2)
+
+	rows2 := sqlmock.NewRows([]string{"state", "COUNT('state')"}).
+		AddRow("CHANGED", 5).
+		AddRow("FAILURE", 1).
+		AddRow("UNCHANGED", 3)
+
+	s.mockDB.ExpectQuery(expSql2).
+		WithArgs(from1.Format(time.DateOnly), to1.Format(time.DateOnly), summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT).
+		WillReturnRows(rows2)
+
+	from2, err := time.Parse(time.DateTime, "2023-02-22 00:00:00")
+	s.Require().NoError(err)
+
+	to2, err := time.Parse(time.DateTime, "2023-02-23 00:00:00")
+	s.Require().NoError(err)
+
+	// Expect the history to be retrieved.
+	s.mockDB.ExpectPrepare(expSql2)
+
+	rows3 := sqlmock.NewRows([]string{"state", "COUNT('state')"}).
+		AddRow("CHANGED", 3).
+		AddRow("FAILURE", 0).
+		AddRow("UNCHANGED", 6)
+
+	s.mockDB.ExpectQuery(expSql2).
+		WithArgs(from2.Format(time.DateOnly), to2.Format(time.DateOnly), summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT).
+		WillReturnRows(rows3)
+
+	from3, err := time.Parse(time.DateTime, "2023-02-23 00:00:00")
+	s.Require().NoError(err)
+
+	to3, err := time.Parse(time.DateTime, "2023-02-24 00:00:00")
+	s.Require().NoError(err)
+
+	// Expect the history to be retrieved.
+	s.mockDB.ExpectPrepare(expSql2)
+
+	rows4 := sqlmock.NewRows([]string{"state", "COUNT('state')"}).
+		AddRow("CHANGED", 2).
+		AddRow("FAILURE", 0).
+		AddRow("UNCHANGED", 7)
+
+	s.mockDB.ExpectQuery(expSql2).
+		WithArgs(from3.Format(time.DateOnly), to3.Format(time.DateOnly), summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT).
+		WillReturnRows(rows4)
+
+	s.mockDB.ExpectClose()
+
+	history, err := s.dbObject.GetHistory(context.Background(), summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetHistory{
@@ -213,7 +311,7 @@ func (s *sqliteSuite) TestGetHistoryAllEnvs() {
 }
 
 func (s *sqliteSuite) TestGetHistorySingleEnv() {
-	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports;`)
+	expSql1 := regexp.QuoteMeta(`SELECT DISTINCT DATE(executed_at) FROM reports WHERE environment IN (?);`)
 
 	// Expect the history to be retrieved.
 	s.mockDB.ExpectPrepare(expSql1)
@@ -226,7 +324,7 @@ func (s *sqliteSuite) TestGetHistorySingleEnv() {
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)
 
-	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment = 'PRODUCTION' GROUP BY state;`)
+	expSql2 := regexp.QuoteMeta(`SELECT DISTINCT state, COUNT('state') FROM reports WHERE executed_at BETWEEN ? AND ? AND environment IN (?) GROUP BY state;`)
 
 	from1, err := time.Parse(time.DateTime, "2023-02-21 00:00:00")
 	s.Require().NoError(err)
@@ -243,7 +341,7 @@ func (s *sqliteSuite) TestGetHistorySingleEnv() {
 		AddRow("UNCHANGED", 3)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from1.Format(time.DateOnly), to1.Format(time.DateOnly)).
+		WithArgs(from1.Format(time.DateOnly), to1.Format(time.DateOnly), summary.Environment_PRODUCTION).
 		WillReturnRows(rows2)
 
 	from2, err := time.Parse(time.DateTime, "2023-02-22 00:00:00")
@@ -261,7 +359,7 @@ func (s *sqliteSuite) TestGetHistorySingleEnv() {
 		AddRow("UNCHANGED", 6)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from2.Format(time.DateOnly), to2.Format(time.DateOnly)).
+		WithArgs(from2.Format(time.DateOnly), to2.Format(time.DateOnly), summary.Environment_PRODUCTION).
 		WillReturnRows(rows3)
 
 	from3, err := time.Parse(time.DateTime, "2023-02-23 00:00:00")
@@ -279,12 +377,12 @@ func (s *sqliteSuite) TestGetHistorySingleEnv() {
 		AddRow("UNCHANGED", 7)
 
 	s.mockDB.ExpectQuery(expSql2).
-		WithArgs(from3.Format(time.DateOnly), to3.Format(time.DateOnly)).
+		WithArgs(from3.Format(time.DateOnly), to3.Format(time.DateOnly), summary.Environment_PRODUCTION).
 		WillReturnRows(rows4)
 
 	s.mockDB.ExpectClose()
 
-	history, err := s.dbObject.GetHistory(context.Background(), entities.EnvProduction)
+	history, err := s.dbObject.GetHistory(context.Background(), summary.Environment_PRODUCTION)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetHistory{
@@ -348,8 +446,8 @@ WHERE hash = ?;
 	s.Require().Equal(&entities.PuppetReport{
 		ID:       id,
 		Fqdn:     "fqdn",
-		Env:      entities.EnvProduction,
-		State:    entities.StateChanged,
+		Env:      summary.Environment_PRODUCTION,
+		State:    summary.State_CHANGED,
 		ExecTime: entities.Datetime(now),
 		Runtime:  entities.Duration(10 * time.Second),
 		Failed:   1,
@@ -403,8 +501,8 @@ func (s *sqliteSuite) TestGetReports() {
 		{
 			ID:       id1,
 			Fqdn:     "fqdn",
-			Env:      entities.EnvProduction,
-			State:    entities.StateChanged,
+			Env:      summary.Environment_PRODUCTION,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(10 * time.Second),
 			Failed:   1,
@@ -415,8 +513,8 @@ func (s *sqliteSuite) TestGetReports() {
 		{
 			ID:       id2,
 			Fqdn:     "fqdn",
-			Env:      entities.EnvDevelopment,
-			State:    entities.StateChanged,
+			Env:      summary.Environment_DEVELOPMENT,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(11 * time.Second),
 			Failed:   1,
@@ -457,21 +555,21 @@ func (s *sqliteSuite) TestGetRunsByStateSingleState() {
 
 	s.mockDB.ExpectClose()
 
-	report, err := s.dbObject.GetRunsByState(ctx, entities.StateChanged)
+	report, err := s.dbObject.GetRunsByState(ctx, summary.State_CHANGED)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetRun{
 		{
 			ID:       "hash1",
 			Fqdn:     "fqdn1",
-			State:    entities.StateChanged,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(10 * time.Second),
 		},
 		{
 			ID:       "hash2",
 			Fqdn:     "fqdn2",
-			State:    entities.StateChanged,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(11 * time.Second),
 		},
@@ -508,21 +606,21 @@ func (s *sqliteSuite) TestGetRunsByStateMultipleStates() {
 
 	s.mockDB.ExpectClose()
 
-	report, err := s.dbObject.GetRunsByState(ctx, entities.StateChanged, entities.StateUnchanged)
+	report, err := s.dbObject.GetRunsByState(ctx, summary.State_CHANGED, summary.State_UNCHANGED)
 	s.Require().NoError(err)
 
 	s.Require().Equal([]*entities.PuppetRun{
 		{
 			ID:       "hash1",
 			Fqdn:     "fqdn1",
-			State:    entities.StateChanged,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(10 * time.Second),
 		},
 		{
 			ID:       "hash2",
 			Fqdn:     "fqdn2",
-			State:    entities.StateUnchanged,
+			State:    summary.State_UNCHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(11 * time.Second),
 		},
@@ -565,18 +663,18 @@ func (s *sqliteSuite) TestGetRuns() {
 		{
 			ID:       "hash1",
 			Fqdn:     "fqdn1",
-			State:    entities.StateChanged,
+			State:    summary.State_CHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(10 * time.Second),
-			Env:      entities.EnvProduction,
+			Env:      summary.Environment_PRODUCTION,
 		},
 		{
 			ID:       "hash2",
 			Fqdn:     "fqdn2",
-			State:    entities.StateUnchanged,
+			State:    summary.State_UNCHANGED,
 			ExecTime: entities.Datetime(now),
 			Runtime:  entities.Duration(11 * time.Second),
-			Env:      entities.EnvDevelopment,
+			Env:      summary.Environment_DEVELOPMENT,
 		},
 	}, report)
 }
@@ -607,7 +705,7 @@ func (s *sqliteSuite) TestSaveRunSuccess() {
 	// Expect the report to be saved.
 	s.mockDB.ExpectPrepare(expSql)
 	s.mockDB.ExpectExec(expSql).
-		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
+		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.parser",
 			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -616,8 +714,8 @@ func (s *sqliteSuite) TestSaveRunSuccess() {
 	err = s.dbObject.SaveRun(ctx, &entities.PuppetReport{
 		ID:       "hash",
 		Fqdn:     "fqdn",
-		Env:      entities.EnvProduction,
-		State:    entities.StateChanged,
+		Env:      summary.Environment_PRODUCTION,
+		State:    summary.State_CHANGED,
 		YamlFile: "yaml_file",
 		ExecTime: entities.Datetime(now),
 		Runtime:  entities.Duration(10 * time.Second),
@@ -654,7 +752,7 @@ func (s *sqliteSuite) TestSaveRunDuplicate() {
 	// Expect the report to be saved.
 	s.mockDB.ExpectPrepare(expSql)
 	s.mockDB.ExpectExec(expSql).
-		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.yaml",
+		WithArgs("hash", "fqdn", "PRODUCTION", "CHANGED", "reports/PRODUCTION/fqdn/2024-02-21T10:20:53Z.parser",
 			now.Format(time.DateTime), "10s", 1, 2, 3, 0).
 		WillReturnError(errors.New("UNIQUE constraint failed: reports.hash"))
 
@@ -663,8 +761,8 @@ func (s *sqliteSuite) TestSaveRunDuplicate() {
 	err = s.dbObject.SaveRun(ctx, &entities.PuppetReport{
 		ID:       "hash",
 		Fqdn:     "fqdn",
-		Env:      entities.EnvProduction,
-		State:    entities.StateChanged,
+		Env:      summary.Environment_PRODUCTION,
+		State:    summary.State_CHANGED,
 		YamlFile: "yaml_file",
 		ExecTime: entities.Datetime(now),
 		Runtime:  entities.Duration(10 * time.Second),

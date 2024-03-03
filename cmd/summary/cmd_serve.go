@@ -2,17 +2,22 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/purge"
 	"log/slog"
 	"net/http"
 	"runtime"
 	"strings"
 
+	svc "github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/api"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/web"
 	"github.com/google/subcommands"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -66,13 +71,18 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		return subcommands.ExitUsageError
 	}
 
-	r := mux.NewRouter()
-
+	db, err := dataaccess.ConnectDatabase(ctx, s.dbType)
+	if err != nil {
+		slog.Error("Error connecting to database", slog.String(logging.KeyError, err.Error()))
+		return subcommands.ExitFailure
+	}
 	if err := s.generateConfig(ctx); err != nil {
 		slog.Error("Error generating configuration", slog.String(logging.KeyError, err.Error()))
 		return subcommands.ExitFailure
 	}
-	s.setupRoutes(r)
+
+	r := mux.NewRouter()
+	s.setup(r, db)
 
 	slog.Info(
 		"Starting application",
@@ -86,7 +96,8 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 
 	// Set up the purge routine
 	if s.autoPurge != 0 {
-		if err := setupPurge(s.autoPurge); err != nil {
+		purgeSvc := purge.NewService(db)
+		if err := purgeSvc.SetupPurge(s.autoPurge); err != nil {
 			slog.Error("Error setting up purge routine", slog.String(logging.KeyError, err.Error()))
 		}
 	} else {
@@ -119,17 +130,13 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 }
 
 func (s *serveCmd) generateConfig(ctx context.Context) error {
-	err := dataaccess.ConnectDatabase(ctx, s.dbType)
-	if err != nil {
-		return fmt.Errorf("error connecting to database: %w", err)
-	}
 	if s.gcs != "" {
-		err = dataaccess.ConnectStorage(ctx, dataaccess.StoreTypeGCS, s.gcs)
+		err := dataaccess.ConnectStorage(ctx, dataaccess.StoreTypeGCS, s.gcs)
 		if err != nil {
 			return fmt.Errorf("error connecting to Files: %w", err)
 		}
 	} else {
-		err = dataaccess.ConnectStorage(ctx, dataaccess.StoreTypeLocal, "")
+		err := dataaccess.ConnectStorage(ctx, dataaccess.StoreTypeLocal, "")
 		if err != nil {
 			return fmt.Errorf("error connecting to local storage: %w", err)
 		}
@@ -148,29 +155,37 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 	return nil
 }
 
-func (s *serveCmd) setupRoutes(r *mux.Router) {
-	apiRouter := r.PathPrefix(pathApi).Subrouter()
+func (s *serveCmd) setup(r *mux.Router, db dataaccess.Database) {
+	apiSvc := api.NewService(db)
 
-	r.HandleFunc(pathUpload, middlewareHttp(uploadHandler, AuthOptionRequired)).Methods(http.MethodPost)
-	apiRouter.HandleFunc(pathStateID, middlewareHttp(stateHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathIndex, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-	apiRouter.HandleFunc(pathNodes, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathIndexEnv, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-	apiRouter.HandleFunc(pathNodesEnv, middlewareHttp(indexHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathNodeFqdn, middlewareHttp(nodeFqdnHandler, AuthOptionNone)).Methods(http.MethodGet)
-	apiRouter.HandleFunc(pathNodeFqdn, middlewareHttp(nodeFqdnHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathReportID, middlewareHttp(reportIDHandler, AuthOptionNone)).Methods(http.MethodGet)
-	apiRouter.HandleFunc(pathReportID, middlewareHttp(reportIDHandler, AuthOptionNone)).Methods(http.MethodGet)
-
-	r.HandleFunc(pathMetrics, middlewareHttp(promhttp.Handler().ServeHTTP, AuthOptionInternal)).Methods(http.MethodGet)
-	r.HandleFunc(pathHealth, middlewareHttp(healthHandler(), AuthOptionInternal)).Methods(http.MethodGet)
+	r.HandleFunc(pathMetrics, promhttp.Handler().ServeHTTP).Methods(http.MethodGet)
+	r.HandleFunc(pathHealth, healthHandler(db).ServeHTTP).Methods(http.MethodGet)
 
 	r.NotFoundHandler = request.NotFoundHandler()
 	r.MethodNotAllowedHandler = request.MethodNotAllowedHandler()
 
 	r.PathPrefix(pathAssets).Handler(http.StripPrefix(pathAssets, http.FileServer(http.Dir("./assets"))))
+
+	svc.HandlerWithOptions(
+		apiSvc,
+		svc.GorillaServerOptions{
+			BaseRouter: r,
+			BaseURL:    pathApi,
+			ErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+				w.WriteHeader(http.StatusBadRequest)
+				encErr := json.NewEncoder(w).Encode(request.NewMessage(fmt.Sprintf("Error handling request: %s", err)))
+				if encErr != nil {
+					slog.Error("Error encoding response", slog.String(logging.KeyError, encErr.Error()))
+				}
+			},
+			Middlewares: []svc.MiddlewareFunc{
+				middlewareHttp,
+			},
+		})
+
+	web.NewServiceFromRouter(
+		r,
+		db,
+		metricsWrapper,
+	)
 }

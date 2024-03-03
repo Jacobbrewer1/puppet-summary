@@ -30,7 +30,7 @@ func (s *ReportSummarySuite) SetupTest() {
 		Changed:  0,
 		Skipped:  0,
 		Total:    0,
-		YamlFile: "test-yaml-file",
+		YamlFile: "test-parser-file",
 	}
 }
 
@@ -47,7 +47,7 @@ func (s *ReportSummarySuite) TestPuppetReportSummary_CalculateTimeSince() {
 func (s *ReportSummarySuite) TestPuppetReportSummary_ReportFilePath() {
 	filePath := s.reportSummary.ReportFilePath()
 	s.Require().NotEmpty(filePath)
-	s.Require().Equal("reports/test-env/test-fqdn/"+s.reportSummary.ExecTime.Time().Format(time.RFC3339)+".yaml", filePath)
+	s.Require().Equal("reports/test-env/test-fqdn/"+s.reportSummary.ExecTime.Time().Format(time.RFC3339)+".parser", filePath)
 }
 
 type ReportSuite struct {
@@ -116,7 +116,7 @@ func (s *ReportSuite) TearDownTest() {
 func (s *ReportSuite) TestPuppetReport_ReportFilePath() {
 	filePath := s.report.ReportFilePath()
 	s.Require().NotEmpty(filePath)
-	s.Require().Equal("reports/test-env/test-fqdn/"+s.report.ExecTime.Time().Format(time.RFC3339)+".yaml", filePath)
+	s.Require().Equal("reports/test-env/test-fqdn/"+s.report.ExecTime.Time().Format(time.RFC3339)+".parser", filePath)
 }
 
 func (s *ReportSuite) TestPuppetReport_SortResources() {

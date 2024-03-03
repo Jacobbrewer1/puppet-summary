@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/purge"
 	"log/slog"
 	"strings"
 
@@ -76,33 +77,32 @@ func (p *purgeCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		return subcommands.ExitFailure
 	}
 
-	// Generate the config
-	if err := p.generateConfig(ctx); err != nil {
-		slog.Error("Error generating config", slog.String(logging.KeyError, err.Error()))
-		return subcommands.ExitFailure
-	}
-
-	// Purge the reports
-	purgeData(p.days)
-
-	return subcommands.ExitSuccess
-}
-
-func (p *purgeCmd) generateConfig(ctx context.Context) error {
-	err := dataaccess.ConnectDatabase(ctx, p.dbType)
+	db, err := dataaccess.ConnectDatabase(ctx, p.dbType)
 	if err != nil {
-		return fmt.Errorf("error connecting to database: %w", err)
+		slog.Error("Error connecting to database", slog.String(logging.KeyError, err.Error()))
+		return subcommands.ExitFailure
 	}
 	if p.gcs != "" {
 		err = dataaccess.ConnectStorage(ctx, dataaccess.StoreTypeGCS, p.gcs)
 		if err != nil {
-			return fmt.Errorf("error connecting to Files: %w", err)
+			slog.Error("Error connecting to Google Cloud Storage", slog.String(logging.KeyError, err.Error()))
+			return subcommands.ExitFailure
 		}
 	} else {
 		err = dataaccess.ConnectStorage(ctx, dataaccess.StoreTypeLocal, "")
 		if err != nil {
-			return fmt.Errorf("error connecting to local storage: %w", err)
+			slog.Error("Error connecting to local storage", slog.String(logging.KeyError, err.Error()))
+			return subcommands.ExitFailure
 		}
 	}
-	return nil
+
+	// Purge the reports
+	purgeSvc := purge.NewService(db)
+	err = purgeSvc.PurgeData(p.days)
+	if err != nil {
+		slog.Error("Error purging data", slog.String(logging.KeyError, err.Error()))
+		return subcommands.ExitFailure
+	}
+
+	return subcommands.ExitSuccess
 }

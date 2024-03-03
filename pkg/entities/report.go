@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"sort"
 	"time"
+
+	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 )
 
 // PuppetReportSummary is the structure used to represent a series
@@ -17,10 +19,10 @@ type PuppetReportSummary struct {
 	Fqdn string `json:"fqdn" bson:"fqdn"`
 
 	// Env is the environment of the node.
-	Env Environment `json:"env" bson:"env"`
+	Env summary.Environment `json:"env" bson:"env"`
 
 	// State is the state of the node.
-	State State `json:"state" bson:"state"`
+	State summary.State `json:"state" bson:"state"`
 
 	// ExecTime is the time the puppet-run was completed. This is self-reported by the node, and copied almost literally.
 	ExecTime Datetime `json:"exec_time" bson:"exec_time"`
@@ -56,7 +58,7 @@ func (n *PuppetReportSummary) CalculateTimeSince() {
 }
 
 func (n *PuppetReportSummary) ReportFilePath() string {
-	path := filepath.Join("reports", n.Env.String(), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".yaml")
+	path := filepath.Join("reports", string(n.Env), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".parser")
 	n.YamlFile = path
 	return path
 }
@@ -74,10 +76,10 @@ type PuppetReport struct {
 	PuppetVersion float64 `json:"puppet_version" bson:"puppet_version"`
 
 	// Env of the node.
-	Env Environment `json:"env" bson:"env"`
+	Env summary.Environment `json:"env" bson:"env"`
 
 	// State of the run. changed, unchanged, etc.
-	State State `json:"state" bson:"state"`
+	State summary.State `json:"state" bson:"state"`
 
 	// ExecTime is the time the puppet-run was completed. This is self-reported by the node, and copied almost literally.
 	ExecTime Datetime `json:"exec_time" bson:"exec_time"`
@@ -117,7 +119,7 @@ type PuppetReport struct {
 }
 
 func (n *PuppetReport) ReportFilePath() string {
-	path := filepath.Join("reports", n.Env.String(), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".yaml")
+	path := filepath.Join("reports", string(n.Env), n.Fqdn, n.ExecTime.Time().Format(time.RFC3339)+".parser")
 	n.YamlFile = path
 	return path
 }

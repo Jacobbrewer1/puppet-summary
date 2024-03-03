@@ -11,7 +11,7 @@ import (
 	"github.com/alexliesenfeld/health"
 )
 
-func healthHandler() Controller {
+func healthHandler(db dataaccess.Database) http.Handler {
 	checker := health.NewChecker(
 		// Disable caching of the results of the checks.
 		health.WithCacheDuration(0),
@@ -24,7 +24,7 @@ func healthHandler() Controller {
 		health.WithCheck(health.Check{
 			Name: "database",
 			Check: func(ctx context.Context) error {
-				if err := dataaccess.DB.Ping(ctx); err != nil {
+				if err := db.Ping(ctx); err != nil {
 					return fmt.Errorf("failed to ping database: %w", err)
 				}
 				return nil
@@ -43,7 +43,5 @@ func healthHandler() Controller {
 		}),
 	)
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		health.NewHandler(checker).ServeHTTP(w, r)
-	}
+	return health.NewHandler(checker)
 }

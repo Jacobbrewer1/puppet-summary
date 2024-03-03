@@ -1,0 +1,297 @@
+openapi: 3.0.0
+info:
+  version: latest
+  title: Puppet Summary API
+  description: Documentation for Puppet Summary API
+
+paths:
+  /upload:
+    post:
+      summary: Upload a puppet report
+      operationId: UploadPuppetReport
+      description: Upload a puppet report
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        description: Binary puppet report
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: Puppet report uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/puppetReport'
+        '400':
+          description: Bad request
+        '409':
+          description: Report already exists
+        '500':
+          description: Error returned from upstream request
+  /nodes:
+    get:
+      summary: Get all nodes
+      operationId: GetAllNodes
+      description: Get all nodes
+      responses:
+        '200':
+          description: Get all nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/nodesResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+  /nodes/enviroment/{env}:
+    get:
+      summary: Get all nodes by environment
+      operationId: GetAllNodesByEnvironment
+      description: Get all nodes by environment
+      parameters:
+        - name: env
+          in: path
+          description: The environment to get nodes from
+          required: true
+          schema:
+            $ref: '#/components/schemas/environment'
+      responses:
+        '200':
+          description: Get all nodes by environment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/nodesResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+  /states/{state}:
+    get:
+      summary: Get all nodes by state
+      operationId: GetAllNodesByState
+      description: Get all nodes by state
+      parameters:
+        - name: state
+          in: path
+          description: The state to get nodes from
+          required: true
+          schema:
+            $ref: '#/components/schemas/state'
+      responses:
+        '200':
+          description: Get all nodes by state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/nodesResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+  /report/{id}:
+    get:
+      summary: Get a report by id
+      operationId: GetReportById
+      description: Get a report by id
+      parameters:
+        - name: id
+          in: path
+          description: The id of the report to get
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Get a report by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/puppetReport'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+  /nodes/{fqdn}:
+    get:
+      summary: Get a node by fqdn
+      operationId: GetNodeByFqdn
+      description: Get a node by fqdn
+      parameters:
+        - name: fqdn
+          in: path
+          description: The fqdn of the node to get
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Get a node by fqdn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+
+components:
+  schemas:
+    message:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Example message'
+
+    environment:
+      description: The environment that a machine is reporting from.
+      type: string
+      enum:
+        - PRODUCTION
+        - STAGING
+        - DEVELOPMENT
+      example: PRODUCTION
+
+    state:
+      description: The estate of the machine from the report.
+      type: string
+      enum:
+        - CHANGED
+        - UNCHANGED
+        - FAILED
+        - SKIPPED
+      example: CHANGED
+
+    puppetReport:
+      type: object
+      properties:
+        id:
+          type: string
+        fqdn:
+          type: string
+        puppet_version:
+          type: number
+        env:
+          $ref: '#/components/schemas/environment'
+        state:
+          $ref: '#/components/schemas/state'
+        exec_time:
+          type: string
+          format: date-time
+          example: '2024-02-13T10:00:09Z'
+        runtime:
+          type: string
+        failed:
+          type: integer
+        changed:
+          type: integer
+        skipped:
+          type: integer
+        total:
+          type: integer
+        log_messages:
+          type: array
+          items:
+            type: string
+        resources_failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        resources_changed:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        resources_skipped:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        resources_ok:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+
+    Resource:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        file:
+          type: string
+        line:
+          type: string
+
+    nodesResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/node'
+
+    node:
+      properties:
+        fqdn:
+          description: The Hostname of the machine.
+          type: string
+          example: 'fqdn.domain.com'
+        env:
+          $ref: '#/components/schemas/environment'
+        state:
+          $ref: '#/components/schemas/state'
+        exec_time:
+          description: The time of when the Puppet Report Ran. (time.RFC3339 format)
+          type: string
+          example: '2024-02-13T10:00:09Z'
+        runtime:
+          description: How long the puppet apply took.
+          type: string
+          example: 23s
