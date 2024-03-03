@@ -94,6 +94,24 @@ type PuppetReport struct {
 	Total *int   `json:"total,omitempty"`
 }
 
+// PuppetReportSummary defines the model for puppetReportSummary.
+type PuppetReportSummary struct {
+	Changed *int `json:"changed,omitempty"`
+
+	// Env The environment that a machine is reporting from.
+	Env      *Environment `json:"env,omitempty"`
+	ExecTime *time.Time   `json:"exec_time,omitempty"`
+	Failed   *int         `json:"failed,omitempty"`
+	Fqdn     *string      `json:"fqdn,omitempty"`
+	Id       *string      `json:"id,omitempty"`
+	Runtime  *string      `json:"runtime,omitempty"`
+	Skipped  *int         `json:"skipped,omitempty"`
+
+	// State The estate of the machine from the report.
+	State *State `json:"state,omitempty"`
+	Total *int   `json:"total,omitempty"`
+}
+
 // State defines the model for state.
 type State string
 

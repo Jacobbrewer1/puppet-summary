@@ -46,7 +46,7 @@ type PuppetReportSummary struct {
 	Total int `json:"total" bson:"total"`
 
 	// YamlFile is the file the report was read from.
-	YamlFile string `json:"yamlFile" bson:"yamlFile"`
+	YamlFile string `json:"-" bson:"yamlFile"`
 }
 
 func (n *PuppetReportSummary) CalculateTimeSince() {
