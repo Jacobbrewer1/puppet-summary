@@ -4,12 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/services/purge"
 	"log/slog"
 	"strings"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/services/purge"
 	"github.com/google/subcommands"
 )
 
