@@ -198,6 +198,10 @@ func (m *mongodbImpl) GetHistory(ctx context.Context, environment ...summary.Env
 }
 
 func (m *mongodbImpl) GetReport(ctx context.Context, id string) (*entities.PuppetReport, error) {
+	if id == "" {
+		return nil, errors.New("id cannot be empty")
+	}
+
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
 	// Start the prometheus metrics.
@@ -219,6 +223,10 @@ func (m *mongodbImpl) GetReport(ctx context.Context, id string) (*entities.Puppe
 }
 
 func (m *mongodbImpl) GetReports(ctx context.Context, fqdn string) ([]*entities.PuppetReportSummary, error) {
+	if fqdn == "" {
+		return nil, errors.New("fqdn cannot be empty")
+	}
+
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
 	// Start the prometheus metrics.
