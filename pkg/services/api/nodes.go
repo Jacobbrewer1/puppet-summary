@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
+	"net/http"
+	"sort"
+
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
-	"log/slog"
-	"net/http"
-	"sort"
 )
 
 func (s service) GetAllNodes(w http.ResponseWriter, r *http.Request) {
