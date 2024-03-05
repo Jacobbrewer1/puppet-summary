@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/oapi-codegen/runtime"
 	"html/template"
 	"io"
 	"log/slog"
@@ -20,6 +19,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/services/parser"
 	"github.com/gorilla/mux"
+	"github.com/oapi-codegen/runtime"
 )
 
 func (s service) reportIDHandler(w http.ResponseWriter, r *http.Request) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/oapi-codegen/runtime"
 	"html/template"
 	"io"
 	"log/slog"
@@ -17,6 +16,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/gorilla/mux"
+	"github.com/oapi-codegen/runtime"
 )
 
 func (s service) nodeFqdnHandler(w http.ResponseWriter, r *http.Request) {
