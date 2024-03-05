@@ -20,6 +20,14 @@ const (
     {{- end }}
 )
 
+var {{ .TypeName }}s = []{{ .TypeName }}{
+	{{- $typeName := .TypeName }}
+    {{- range $key, $value := .Schema.EnumValues }}
+    {{ $typeName }}_{{ $value }},
+    {{- end }}
+}
+
+// IsIn checks if the value is in the list of {{ .TypeName }}
 func (t {{ $typeName }}) IsIn(values ...{{ $typeName }}) bool {
     for _, v := range values {
         if t == v {
@@ -27,6 +35,11 @@ func (t {{ $typeName }}) IsIn(values ...{{ $typeName }}) bool {
         }
     }
     return false
+}
+
+// IsValid checks if the value is valid
+func (t {{ $typeName }}) IsValid() bool {
+    return t.IsIn({{ $typeName }}s...)
 }
 {{- end }}
 {{end}}

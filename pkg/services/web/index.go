@@ -28,11 +28,11 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 	if envOk {
 		envStr = strings.ToUpper(envStr)
 		env = summary.Environment(envStr)
-		if !env.IsIn(summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT) {
+		if !env.IsValid() {
 			// Respond with 400 bad request.
 			w.WriteHeader(http.StatusBadRequest)
 			if err := json.NewEncoder(w).Encode(request.NewMessage("Invalid environment provided")); err != nil {
-				slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+				slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 			}
 			return
 		}
@@ -43,7 +43,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting nodes")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -92,7 +92,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting history")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -124,7 +124,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 			// Respond with 404 not found.
 			w.WriteHeader(http.StatusNotFound)
 			if err := json.NewEncoder(w).Encode(request.NewMessage("No environments found")); err != nil {
-				slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+				slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 			}
 			return
 		}
@@ -133,7 +133,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting environments")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -161,7 +161,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error reading page template")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -178,7 +178,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error reading page template")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -196,7 +196,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error executing template")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}

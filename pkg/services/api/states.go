@@ -12,6 +12,15 @@ import (
 )
 
 func (s service) GetAllNodesByState(w http.ResponseWriter, r *http.Request, state summary.State) {
+	if !state.IsValid() {
+		slog.Warn("Invalid state provided", slog.String("state", string(state)))
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Invalid state provided")); err != nil {
+			slog.Warn("Error encoding response", slog.String("error", err.Error()))
+		}
+		return
+	}
+
 	// Get the state from the database.
 	runs, err := s.r.GetRunsByState(r.Context(), state)
 	if err != nil {
