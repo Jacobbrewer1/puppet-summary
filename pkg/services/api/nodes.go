@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"sort"
-	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
@@ -44,44 +43,6 @@ func (s service) GetAllNodes(w http.ResponseWriter, r *http.Request) {
 				nodesMap[key] = node
 			}
 		}
-	}
-
-	// Sort the nodes by the time since the last puppet-run. This will put the nodes with the newest puppet-runs at
-	// the top.
-	sort.Slice(nodes, func(i, j int) bool {
-		return nodes[i].TimeSince.Time() < nodes[j].TimeSince.Time()
-	})
-
-	history, err := s.r.GetHistory(r.Context())
-	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
-		slog.Error("Error getting history", slog.String(logging.KeyError, err.Error()))
-		// Respond with 500 internal server error.
-		w.WriteHeader(http.StatusInternalServerError)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting history")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	}
-
-	// If the history is not empty, then sort them by timestamp.
-	if len(history) > 0 {
-		sort.Slice(history, func(i, j int) bool {
-			// Parse the timestamps.
-			iTime, err := time.Parse(time.DateOnly, history[i].Date)
-			if err != nil {
-				slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
-				return false
-			}
-
-			jTime, err := time.Parse(time.DateOnly, history[j].Date)
-			if err != nil {
-				slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
-				return false
-			}
-
-			// Compare the timestamps.
-			return iTime.Before(jTime)
-		})
 	}
 
 	// Create the response.
@@ -137,44 +98,6 @@ func (s service) GetAllNodesByEnvironment(w http.ResponseWriter, r *http.Request
 				nodesMap[key] = node
 			}
 		}
-	}
-
-	// Sort the nodes by the time since the last puppet-run. This will put the nodes with the newest puppet-runs at
-	// the top.
-	sort.Slice(nodes, func(i, j int) bool {
-		return nodes[i].TimeSince.Time() < nodes[j].TimeSince.Time()
-	})
-
-	history, err := s.r.GetHistory(r.Context(), env)
-	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
-		slog.Error("Error getting history", slog.String(logging.KeyError, err.Error()))
-		// Respond with 500 internal server error.
-		w.WriteHeader(http.StatusInternalServerError)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting history")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	}
-
-	// If the history is not empty, then sort them by timestamp.
-	if len(history) > 0 {
-		sort.Slice(history, func(i, j int) bool {
-			// Parse the timestamps.
-			iTime, err := time.Parse(time.DateOnly, history[i].Date)
-			if err != nil {
-				slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
-				return false
-			}
-
-			jTime, err := time.Parse(time.DateOnly, history[j].Date)
-			if err != nil {
-				slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
-				return false
-			}
-
-			// Compare the timestamps.
-			return iTime.Before(jTime)
-		})
 	}
 
 	// Create the response.
