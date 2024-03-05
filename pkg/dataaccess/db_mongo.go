@@ -78,6 +78,8 @@ func (m *mongodbImpl) GetEnvironments(ctx context.Context) ([]summary.Environmen
 }
 
 func (m *mongodbImpl) GetHistory(ctx context.Context, environment ...summary.Environment) ([]*entities.PuppetHistory, error) {
+	fmt.Printf("step %s\n", time.Now().String())
+
 	// First get the distinct dates from the database.
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
