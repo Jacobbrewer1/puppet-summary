@@ -205,7 +205,10 @@ func (m *mongodbImpl) GetReport(ctx context.Context, id string) (*entities.Puppe
 	defer t.ObserveDuration()
 
 	var report entities.PuppetReport
-	err := collection.FindOne(ctx, bson.M{"id": id}).Decode(&report)
+	err := collection.FindOne(ctx, bson.M{"id": bson.M{
+		"$eq": id,
+		"$ne": "", // This is to ensure that the id is not empty. AKA NOSQL injection.
+	}}).Decode(&report)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, ErrNotFound
 	} else if err != nil {
