@@ -42,7 +42,7 @@ func parseEnvironment(y *simpleyaml.Yaml, out *entities.PuppetReport) error {
 		return errors.New("the submitted 'environment' field failed our security check")
 	}
 	env := summary.Environment(strings.ToUpper(envStr))
-	if !env.IsIn(summary.Environment_PRODUCTION, summary.Environment_DEVELOPMENT, summary.Environment_STAGING) {
+	if !env.IsValid() {
 		return fmt.Errorf("invalid environment '%s'", env)
 	}
 	out.Env = env

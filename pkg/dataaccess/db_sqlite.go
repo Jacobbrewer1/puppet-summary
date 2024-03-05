@@ -100,7 +100,7 @@ func (s *sqliteImpl) GetHistory(ctx context.Context, environment ...summary.Envi
 	envStrSlice := make([]any, len(environment))
 	if len(environment) > 0 {
 		for i, env := range environment {
-			if !env.IsIn(summary.Environment_PRODUCTION, summary.Environment_STAGING, summary.Environment_DEVELOPMENT) {
+			if !env.IsValid() {
 				return nil, fmt.Errorf("invalid environment: %s", env)
 			}
 

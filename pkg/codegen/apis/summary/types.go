@@ -33,6 +33,13 @@ const (
 	Environment_STAGING     Environment = "STAGING"
 )
 
+var Environments = []Environment{
+	Environment_DEVELOPMENT,
+	Environment_PRODUCTION,
+	Environment_STAGING,
+}
+
+// IsIn checks if the value is in the list of Environment
 func (t Environment) IsIn(values ...Environment) bool {
 	for _, v := range values {
 		if t == v {
@@ -40,6 +47,11 @@ func (t Environment) IsIn(values ...Environment) bool {
 		}
 	}
 	return false
+}
+
+// IsValid checks if the value is valid
+func (t Environment) IsValid() bool {
+	return t.IsIn(Environments...)
 }
 
 // Message defines the model for message.
@@ -123,6 +135,14 @@ const (
 	State_UNCHANGED State = "UNCHANGED"
 )
 
+var States = []State{
+	State_CHANGED,
+	State_FAILED,
+	State_SKIPPED,
+	State_UNCHANGED,
+}
+
+// IsIn checks if the value is in the list of State
 func (t State) IsIn(values ...State) bool {
 	for _, v := range values {
 		if t == v {
@@ -130,4 +150,9 @@ func (t State) IsIn(values ...State) bool {
 		}
 	}
 	return false
+}
+
+// IsValid checks if the value is valid
+func (t State) IsValid() bool {
+	return t.IsIn(States...)
 }

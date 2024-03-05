@@ -16,7 +16,7 @@ func NotFoundHandler() http.HandlerFunc {
 		w.Header().Set("content-type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(msg); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 	}
 }
@@ -28,7 +28,7 @@ func MethodNotAllowedHandler() http.HandlerFunc {
 		w.Header().Set("content-type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		if err := json.NewEncoder(w).Encode(msg); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 	}
 }
@@ -40,7 +40,7 @@ func UnauthorizedHandler() http.HandlerFunc {
 		w.WriteHeader(http.StatusUnauthorized)
 		msg := NewMessage(messages.ErrUnauthorized)
 		if err := json.NewEncoder(w).Encode(msg); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 	}
 }

@@ -29,7 +29,7 @@ func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.Ha
 				)
 				w.WriteHeader(http.StatusInternalServerError)
 				if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrInternalServer)); err != nil {
-					slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+					slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 				}
 			}
 		}()
@@ -60,7 +60,7 @@ func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.Ha
 				if token == nil || len(token.(string)) == 0 || token.(string) != authToken {
 					w.WriteHeader(http.StatusUnauthorized)
 					if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrUnauthorized)); err != nil {
-						slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+						slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 					}
 					return
 				}
@@ -70,7 +70,7 @@ func middlewareHttp(handler http.Handler, authOption summary.AuthOption) http.Ha
 			if !request.IsInternal(r) {
 				w.WriteHeader(http.StatusUnauthorized)
 				if err := json.NewEncoder(w).Encode(request.NewMessage(messages.ErrUnauthorized)); err != nil {
-					slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+					slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 				}
 				return
 			}

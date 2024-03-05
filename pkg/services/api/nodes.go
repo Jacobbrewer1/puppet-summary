@@ -22,7 +22,7 @@ func (s service) GetAllNodes(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting nodes")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -73,7 +73,7 @@ func (s service) GetAllNodesByEnvironment(w http.ResponseWriter, r *http.Request
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting nodes")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -128,7 +128,7 @@ func (s service) GetNodeByFqdn(w http.ResponseWriter, r *http.Request, fqdn stri
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting reports")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -137,7 +137,7 @@ func (s service) GetNodeByFqdn(w http.ResponseWriter, r *http.Request, fqdn stri
 		// Respond with 404 not found.
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("No reports found for node %s", fqdn)); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}

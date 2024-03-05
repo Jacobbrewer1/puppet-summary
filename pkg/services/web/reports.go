@@ -108,7 +108,7 @@ func (s service) reportIDHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error reading page template")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -125,7 +125,7 @@ func (s service) reportIDHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error reading page template")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
@@ -148,7 +148,7 @@ func (s service) reportIDHandler(w http.ResponseWriter, r *http.Request) {
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error executing template")); err != nil {
-			slog.Error("Error encoding response", slog.String(logging.KeyError, err.Error()))
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}

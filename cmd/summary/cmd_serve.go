@@ -175,7 +175,7 @@ func (s *serveCmd) setup(r *mux.Router, db dataaccess.Database) {
 				w.WriteHeader(http.StatusBadRequest)
 				encErr := json.NewEncoder(w).Encode(request.NewMessage(fmt.Sprintf("Error handling request: %s", err)))
 				if encErr != nil {
-					slog.Error("Error encoding response", slog.String(logging.KeyError, encErr.Error()))
+					slog.Warn("Error encoding response", slog.String(logging.KeyError, encErr.Error()))
 				}
 			},
 			Middlewares: []svc.MiddlewareFunc{
