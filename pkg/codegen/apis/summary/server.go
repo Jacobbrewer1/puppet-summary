@@ -26,7 +26,7 @@ type ServerInterface interface {
 	// (GET /nodes/{fqdn})
 	GetNodeByFqdn(w http.ResponseWriter, r *http.Request, fqdn string)
 	// Get a report by id
-	// (GET /report/{id})
+	// (GET /reports/{id})
 	GetReportById(w http.ResponseWriter, r *http.Request, id string)
 	// Get all nodes by state
 	// (GET /states/{state})
@@ -351,7 +351,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/nodes/{fqdn}", wrapper.GetNodeByFqdn).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/report/{id}", wrapper.GetReportById).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/reports/{id}", wrapper.GetReportById).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/states/{state}", wrapper.GetAllNodesByState).Methods("GET")
 

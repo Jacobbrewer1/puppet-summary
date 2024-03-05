@@ -118,7 +118,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/message'
-  /report/{id}:
+  /reports/{id}:
     get:
       summary: Get a report by id
       operationId: GetReportById
