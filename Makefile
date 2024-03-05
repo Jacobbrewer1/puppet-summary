@@ -1,12 +1,11 @@
-CI-all: ci-docker-push
-ci: PR-approval
+CI-all: ci
 
 PR-approval:
 	@echo "Running PR CI"
 	go build ./...
 	go vet ./...
 	go test ./...
-ci-docker-push: clean
+ci: clean
 	# For each subdirectory of the cmd directory, run make ci
 	for d in cmd/*; do \
 		(cd $$d && make ci); \
