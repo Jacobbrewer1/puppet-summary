@@ -23,7 +23,7 @@ import (
 )
 
 func (s service) reportIDHandler(w http.ResponseWriter, r *http.Request) {
-	// ------------- Path parameter "fqdn" -------------
+	// ------------- Path parameter "reportId" -------------
 	var reportId string
 	err := runtime.BindStyledParameterWithOptions("simple", "report_id", mux.Vars(r)["report_id"], &reportId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
