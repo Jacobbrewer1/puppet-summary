@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/oapi-codegen/runtime"
 	"html/template"
 	"io"
 	"log/slog"
@@ -22,23 +23,20 @@ import (
 )
 
 func (s service) reportIDHandler(w http.ResponseWriter, r *http.Request) {
-	id, ok := mux.Vars(r)["report_id"]
-	if !ok {
+	// ------------- Path parameter "fqdn" -------------
+	var reportId string
+	err := runtime.BindStyledParameterWithOptions("simple", "report_id", mux.Vars(r)["report_id"], &reportId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		slog.Error("Error binding path parameter", slog.String(logging.KeyError, err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("No report ID provided")); err != nil {
-			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	} else if id == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("Invalid report ID provided")); err != nil {
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Error binding path parameter")); err != nil {
 			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
 	}
 
 	// Get the report from the database.
-	rep, err := s.db.GetReport(r.Context(), id)
+	rep, err := s.db.GetReport(r.Context(), reportId)
 	if errors.Is(err, dataaccess.ErrNotFound) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Report not found")); err != nil {
