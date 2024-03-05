@@ -67,7 +67,6 @@ func (s *GetAllNodesSuite) TestGetAllNodes() {
 
 	// Test the index handler with the API.
 	m.On("GetRuns", mock.AnythingOfType("context.backgroundCtx")).Return(runs, nil).Once()
-	m.On("GetHistory", mock.AnythingOfType("context.backgroundCtx"), []summary.Environment(nil)).Return([]*entities.PuppetHistory{}, nil).Once()
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/nodes", nil)
