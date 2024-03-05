@@ -198,6 +198,10 @@ func (m *mongodbImpl) GetHistory(ctx context.Context, environment ...summary.Env
 }
 
 func (m *mongodbImpl) GetReport(ctx context.Context, id string) (*entities.PuppetReport, error) {
+	if id == "" {
+		return nil, errors.New("id cannot be empty")
+	}
+
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
 	// Start the prometheus metrics.
@@ -205,7 +209,10 @@ func (m *mongodbImpl) GetReport(ctx context.Context, id string) (*entities.Puppe
 	defer t.ObserveDuration()
 
 	var report entities.PuppetReport
-	err := collection.FindOne(ctx, bson.M{"id": id}).Decode(&report)
+	err := collection.FindOne(ctx, bson.M{"id": bson.M{
+		"$eq": id,
+		"$ne": "", // This is to ensure that the id is not empty. AKA NOSQL injection.
+	}}).Decode(&report)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, ErrNotFound
 	} else if err != nil {
@@ -216,12 +223,19 @@ func (m *mongodbImpl) GetReport(ctx context.Context, id string) (*entities.Puppe
 }
 
 func (m *mongodbImpl) GetReports(ctx context.Context, fqdn string) ([]*entities.PuppetReportSummary, error) {
+	if fqdn == "" {
+		return nil, errors.New("fqdn cannot be empty")
+	}
+
 	collection := m.client.Database(mongoDatabase).Collection("reports")
 
 	// Start the prometheus metrics.
 	t := prometheus.NewTimer(DatabaseLatency.WithLabelValues("get_reports"))
 
-	cursor, err := collection.Find(ctx, bson.M{"fqdn": fqdn})
+	cursor, err := collection.Find(ctx, bson.M{"fqdn": bson.M{
+		"$eq": fqdn,
+		"$ne": "", // This is to ensure that the fqdn is not empty. AKA NOSQL injection.
+	}})
 	if err != nil {
 		return nil, fmt.Errorf("error getting reports: %w", err)
 	}

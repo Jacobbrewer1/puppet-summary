@@ -16,21 +16,18 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/gorilla/mux"
+	"github.com/oapi-codegen/runtime"
 )
 
 func (s service) nodeFqdnHandler(w http.ResponseWriter, r *http.Request) {
-	nodeFqdn, ok := mux.Vars(r)["node_fqdn"]
-	if !ok {
-		// Respond with 400 bad request.
+	// ------------- Path parameter "node_fqdn" -------------
+	var nodeFqdn string
+
+	err := runtime.BindStyledParameterWithOptions("simple", "node_fqdn", mux.Vars(r)["node_fqdn"], &nodeFqdn, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		slog.Error("Error binding path parameter", slog.String(logging.KeyError, err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("No node fqdn provided")); err != nil {
-			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
-		}
-		return
-	} else if nodeFqdn == "" {
-		// Respond with 400 bad request.
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(request.NewMessage("No node fqdn provided")); err != nil {
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Error binding path parameter")); err != nil {
 			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
 		return
