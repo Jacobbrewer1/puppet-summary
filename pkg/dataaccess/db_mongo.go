@@ -221,7 +221,10 @@ func (m *mongodbImpl) GetReports(ctx context.Context, fqdn string) ([]*entities.
 	// Start the prometheus metrics.
 	t := prometheus.NewTimer(DatabaseLatency.WithLabelValues("get_reports"))
 
-	cursor, err := collection.Find(ctx, bson.M{"fqdn": fqdn})
+	cursor, err := collection.Find(ctx, bson.M{"fqdn": bson.M{
+		"$eq": fqdn,
+		"$ne": "", // This is to ensure that the fqdn is not empty. AKA NOSQL injection.
+	}})
 	if err != nil {
 		return nil, fmt.Errorf("error getting reports: %w", err)
 	}
