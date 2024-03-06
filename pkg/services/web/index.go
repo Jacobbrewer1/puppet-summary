@@ -19,23 +19,22 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/request"
 	"github.com/gorilla/mux"
+	"github.com/oapi-codegen/runtime"
 )
 
 func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// See if the environment has been provided in the URL.
 	envStr, envOk := mux.Vars(r)["env"]
 	var env summary.Environment
-	if envOk {
-		envStr = strings.ToUpper(envStr)
-		env = summary.Environment(envStr)
-		if !env.IsValid() {
-			// Respond with 400 bad request.
-			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(request.NewMessage("Invalid environment provided")); err != nil {
-				slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
-			}
-			return
+	err := runtime.BindStyledParameterWithOptions("simple", "env", envStr, &env, runtime.BindStyledParameterOptions{Explode: false, Required: false})
+	if err != nil {
+		slog.Warn("Error binding environment", slog.String(logging.KeyError, err.Error()))
+		// Respond with 400 bad request.
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(request.NewMessage("Invalid environment provided")); err != nil {
+			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))
 		}
+		return
 	}
 
 	nodes, err := s.db.GetRuns(r.Context())
