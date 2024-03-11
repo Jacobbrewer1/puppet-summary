@@ -48,7 +48,7 @@ jobs:
 
       # Use the changelog provided by the previous step to create a release.
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           body_path: ${{ github.workspace }}/changelog.md
           token: ${{ secrets.GITHUB_TOKEN }}
