@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.39.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/alexliesenfeld/health v0.8.0
-	github.com/go-sql-driver/mysql v1.7.1
+	github.com/go-sql-driver/mysql v1.8.0
 	github.com/google/subcommands v1.2.0
 	github.com/gorilla/mux v1.8.1
 	github.com/mattn/go-sqlite3 v1.14.22
@@ -25,6 +25,7 @@ require (
 	cloud.google.com/go/compute v1.24.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
