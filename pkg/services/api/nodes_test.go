@@ -8,7 +8,6 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -65,11 +64,11 @@ func (s *GetAllNodesSuite) TestGetAllNodes() {
 		},
 	}
 
-	// Test the index handler with the API.
-	m.On("GetRuns", mock.AnythingOfType("context.backgroundCtx")).Return(runs, nil).Once()
-
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/nodes", nil)
+
+	// Test the index handler with the API.
+	m.On("GetRuns", r.Context()).Return(runs, nil).Once()
 
 	s.svc.GetAllNodes(w, r)
 
