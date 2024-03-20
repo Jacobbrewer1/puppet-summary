@@ -12,7 +12,7 @@ GO and uses the gorilla/mux router for the API and the web interface.
 There are multiple ways to run the application. You can either run the application directly on your host or you can
 run the application within a Docker container. The application will listen on port `8080` by default.
 
-When running teh application, the app will default to using the local filesystem to store the raw reports, the default
+When running the application, the app will default to using the local filesystem to store the raw reports, the default
 database is SQLite. These can be changed by using the flags that are available (Listed below).
 
 ### Commands
