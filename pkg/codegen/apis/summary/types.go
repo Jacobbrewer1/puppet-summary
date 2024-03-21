@@ -5,6 +5,8 @@ package summary
 
 import (
 	"time"
+
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 const (
@@ -156,3 +158,11 @@ func (t State) IsIn(values ...State) bool {
 func (t State) IsValid() bool {
 	return t.IsIn(States...)
 }
+
+// PurgePuppetReportsJSONBody defines parameters for PurgePuppetReports.
+type PurgePuppetReportsJSONBody struct {
+	Date *openapi_types.Date `json:"date,omitempty"`
+}
+
+// PurgePuppetReportsJSONRequestBody defines body for PurgePuppetReports for application/json ContentType.
+type PurgePuppetReportsJSONRequestBody PurgePuppetReportsJSONBody

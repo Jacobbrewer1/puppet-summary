@@ -98,7 +98,7 @@ func (p *purgeCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 
 	// Purge the reports
 	purgeSvc := purge.NewService(db)
-	err = purgeSvc.PurgeData(p.days)
+	err = purgeSvc.PurgePuppetReports(p.days)
 	if err != nil {
 		slog.Error("Error purging data", slog.String(logging.KeyError, err.Error()))
 		return subcommands.ExitFailure

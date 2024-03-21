@@ -25,6 +25,9 @@ type ServerInterface interface {
 	// Get a node by fqdn
 	// (GET /nodes/{fqdn})
 	GetNodeByFqdn(w http.ResponseWriter, r *http.Request, fqdn string)
+	// Purge Puppet Reports from a specified date
+	// (DELETE /purge)
+	PurgePuppetReports(w http.ResponseWriter, r *http.Request)
 	// Get a report by id
 	// (GET /reports/{id})
 	GetReportById(w http.ResponseWriter, r *http.Request, id string)
@@ -136,6 +139,31 @@ func (siw *ServerInterfaceWrapper) GetNodeByFqdn(w http.ResponseWriter, r *http.
 		// Check to see what kind of authentication is required
 
 		opt := AuthOptionNone
+
+		handler = middleware(handler, opt)
+	}
+
+	handler.ServeHTTP(cw, r.WithContext(ctx))
+}
+
+// PurgePuppetReports operation middleware
+func (siw *ServerInterfaceWrapper) PurgePuppetReports(w http.ResponseWriter, r *http.Request) {
+	cw := request.NewClientWriter(w)
+
+	ctx := r.Context()
+
+	token := r.Header.Get("Authorization")
+	token = strings.TrimPrefix(token, "Bearer ")
+	ctx = context.WithValue(ctx, BearerAuthScopes, token)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PurgePuppetReports(cw, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		// Check to see what kind of authentication is required
+
+		opt := AuthOptionRequired
 
 		handler = middleware(handler, opt)
 	}
@@ -350,6 +378,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/nodes/enviroment/{env}", wrapper.GetAllNodesByEnvironment).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/nodes/{fqdn}", wrapper.GetNodeByFqdn).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/purge", wrapper.PurgePuppetReports).Methods("DELETE")
 
 	r.HandleFunc(options.BaseURL+"/reports/{id}", wrapper.GetReportById).Methods("GET")
 
