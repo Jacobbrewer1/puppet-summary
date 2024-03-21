@@ -23,7 +23,7 @@ func (s service) SetupPurge(purgeDays int) error {
 
 	// Add a new entry to the cron scheduler to purge every day at 03:00.
 	if _, err := c.AddFunc("0 3 * * *", func() {
-		err := s.PurgeData(purgeDays)
+		err := s.PurgePuppetReports(purgeDays)
 		if err != nil {
 			slog.Error("Error purging data", slog.String(logging.KeyError, err.Error()))
 		}
@@ -36,7 +36,7 @@ func (s service) SetupPurge(purgeDays int) error {
 	return nil
 }
 
-func (s service) PurgeData(purgeDays int) error {
+func (s service) PurgePuppetReports(purgeDays int) error {
 	slog.Info("Purging data")
 
 	if purgeDays == 0 {

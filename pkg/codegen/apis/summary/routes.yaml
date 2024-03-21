@@ -185,6 +185,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/message'
+  /purge:
+    delete:
+      summary: Purge Puppet Reports from a specified date
+      operationId: PurgePuppetReports
+      description: Purge Puppet Reports from a specified date
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        description: The date to purge reports from
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+                  example: '2024-02-13'
+      responses:
+        '200':
+          description: Reports purged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
+        '500':
+          description: Error returned from upstream request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/message'
 
 components:
   schemas:

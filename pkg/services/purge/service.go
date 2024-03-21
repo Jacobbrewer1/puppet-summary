@@ -5,7 +5,7 @@ import (
 )
 
 type Purger interface {
-	PurgeData(purgeDays int) error
+	PurgePuppetReports(purgeDays int) error
 
 	SetupPurge(purgeDays int) error
 }

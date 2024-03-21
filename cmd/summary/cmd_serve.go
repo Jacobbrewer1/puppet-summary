@@ -94,16 +94,6 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		slog.String("date", Date),
 	)
 
-	// Set up the purge routine
-	if s.autoPurge != 0 {
-		purgeSvc := purge.NewService(db)
-		if err := purgeSvc.SetupPurge(s.autoPurge); err != nil {
-			slog.Error("Error setting up purge routine", slog.String(logging.KeyError, err.Error()))
-		}
-	} else {
-		slog.Info("Auto purge not set, data will not be purged")
-	}
-
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: r,
@@ -156,7 +146,18 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 }
 
 func (s *serveCmd) setup(r *mux.Router, db dataaccess.Database) {
-	apiSvc := api.NewService(db)
+	purgeSvc := purge.NewService(db)
+
+	// Set up the purge routine
+	if s.autoPurge != 0 {
+		if err := purgeSvc.SetupPurge(s.autoPurge); err != nil {
+			slog.Error("Error setting up purge goroutine", slog.String(logging.KeyError, err.Error()))
+		}
+	} else {
+		slog.Info("Auto purge not set, data will not be purged")
+	}
+
+	apiSvc := api.NewService(db, purgeSvc)
 
 	r.HandleFunc(pathMetrics, promhttp.Handler().ServeHTTP).Methods(http.MethodGet)
 	r.HandleFunc(pathHealth, healthHandler(db).ServeHTTP).Methods(http.MethodGet)
