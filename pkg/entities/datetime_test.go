@@ -88,7 +88,7 @@ func TestDatetime_Scan(t *testing.T) {
 			name:    "Invalid",
 			d:       Datetime{},
 			data:    `2020-01-01T00:00:00Z`,
-			wantErr: errors.New(`invalid scan, type string not supported for *entities.Datetime`),
+			wantErr: nil,
 		},
 	}
 

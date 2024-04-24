@@ -148,7 +148,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 		}
 
 		// Parse the date.
-		dt, err := time.Parse(time.RFC3339, d)
+		dt, err := time.Parse(time.DateOnly, d)
 		if err != nil {
 			slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
 			continue
