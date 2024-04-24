@@ -70,9 +70,11 @@ func (d *Datetime) UnmarshalBSON(bytes []byte) error {
 
 // Scan implements the sql.Scanner interface.
 func (d *Datetime) Scan(src any) error {
-	t, ok := src.(time.Time)
-	if !ok {
-		return fmt.Errorf("invalid scan, type %T not supported for %T", src, d)
+	// Parse the time.
+	str := fmt.Sprintf("%s", src)
+	t, err := time.Parse(time.DateTime, str)
+	if err != nil {
+		return fmt.Errorf("%s is not in the RFC3339 format", str)
 	}
 	*d = Datetime(t)
 	return nil

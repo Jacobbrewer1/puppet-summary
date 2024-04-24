@@ -52,7 +52,7 @@ func ConnectDatabase(ctx context.Context, dbType string, v *viper.Viper) (Databa
 
 	opt := DbOpt(dbType)
 	if !opt.Valid() {
-		panic("Invalid database option")
+		return nil, fmt.Errorf("invalid database option, %s", dbType)
 	}
 
 	switch opt {
