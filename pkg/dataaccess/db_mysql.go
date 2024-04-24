@@ -529,9 +529,10 @@ CREATE TABLE IF NOT EXISTS reports
 func NewMySQL(v *viper.Viper) (Database, error) {
 	connectionString := v.GetString("db.conn_str")
 	if connectionString != "" {
-		slog.Debug("Found MySQL URI")
+		slog.Debug("Found MySQL URI in environment")
 	} else {
-		return nil, errors.New("no MySQL URI provided")
+		// Missing environment variable.
+		return nil, fmt.Errorf("no %s environment variable provided", EnvDbConnStr)
 	}
 
 	d, err := sql.Open("mysql", connectionString)

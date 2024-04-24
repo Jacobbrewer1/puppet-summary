@@ -39,7 +39,6 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	nodes, err := s.db.GetRuns(r.Context())
 	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
-		slog.Error("Error getting nodes", slog.String(logging.KeyError, err.Error()))
 		// Respond with 500 internal server error.
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting nodes")); err != nil {
