@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/spf13/viper"
 	"log/slog"
 	"strings"
 
@@ -77,7 +78,15 @@ func (p *purgeCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		return subcommands.ExitFailure
 	}
 
-	db, err := dataaccess.ConnectDatabase(ctx, p.dbType, nil)
+	v := viper.New()
+	err := v.BindEnv("db.conn_str", "DB_CONN_STR")
+	if err != nil {
+		slog.Error("Error binding environment variable", slog.String(logging.KeyError, err.Error()))
+		return subcommands.ExitFailure
+
+	}
+
+	db, err := dataaccess.ConnectDatabase(ctx, p.dbType, v)
 	if err != nil {
 		slog.Error("Error connecting to database", slog.String(logging.KeyError, err.Error()))
 		return subcommands.ExitFailure
