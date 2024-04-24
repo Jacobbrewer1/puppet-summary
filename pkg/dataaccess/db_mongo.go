@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"sort"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -337,17 +337,17 @@ func (m *mongodbImpl) SaveRun(ctx context.Context, report *entities.PuppetReport
 	return nil
 }
 
-func NewMongo(ctx context.Context) (Database, error) {
+func NewMongo(ctx context.Context, v *viper.Viper) (Database, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	connectionString := os.Getenv(envDbConnStr)
+	connectionString := v.GetString("db.conn_str")
 	if connectionString != "" {
 		slog.Debug("Found MongoDB URI in environment")
 	} else {
 		// Missing environment variable.
-		return nil, fmt.Errorf("missing environment variable: %s", envDbConnStr)
+		return nil, fmt.Errorf("missing environment variable: %s", EnvDbConnStr)
 	}
 
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)

@@ -6,8 +6,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/vault"
+	"github.com/spf13/viper"
 	"log/slog"
 	"net/http"
+	"os"
 	"runtime"
 	"strings"
 
@@ -24,6 +27,12 @@ import (
 )
 
 type serveCmd struct {
+	// vaultEnabled is whether to use vault for secrets.
+	vaultEnabled bool
+
+	// configLocation is the location of the config file
+	configLocation string
+
 	// authToken is the token used to authenticate requests to the upload endpoint. If empty, the endpoint is not secure.
 	authToken string
 
@@ -52,6 +61,8 @@ func (s *serveCmd) Usage() string {
 }
 
 func (s *serveCmd) SetFlags(f *flag.FlagSet) {
+	f.BoolVar(&s.vaultEnabled, "vault", false, "Whether to use vault for secrets")
+	f.StringVar(&s.configLocation, "config", "config.json", "The location of the config file")
 	f.StringVar(&s.authToken, "auth-token", "", "The Bearer token used to authenticate requests to the upload endpoint.")
 	f.IntVar(&s.autoPurge, "auto-purge", 0, "The number of days to keep data for. If 0 (or not set), data will not be purged.")
 	f.StringVar(&s.dbType, "db", dataaccess.DbSqlite.String(), "The type of database to use. Valid values are 'sqlite', 'mysql', and 'mongodb'.")
@@ -71,18 +82,13 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		return subcommands.ExitUsageError
 	}
 
-	db, err := dataaccess.ConnectDatabase(ctx, s.dbType)
-	if err != nil {
-		slog.Error("Error connecting to database", slog.String(logging.KeyError, err.Error()))
-		return subcommands.ExitFailure
-	}
 	if err := s.generateConfig(ctx); err != nil {
 		slog.Error("Error generating configuration", slog.String(logging.KeyError, err.Error()))
 		return subcommands.ExitFailure
 	}
 
 	r := mux.NewRouter()
-	s.setup(r, db)
+	s.setup(r)
 
 	slog.Info(
 		"Starting application",
@@ -145,7 +151,45 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 	return nil
 }
 
-func (s *serveCmd) setup(r *mux.Router, db dataaccess.Database) {
+func (s *serveCmd) setup(r *mux.Router) {
+	v := viper.New()
+	v.SetConfigFile(s.configLocation)
+	if err := v.ReadInConfig(); err != nil {
+		slog.Error("Error reading config file", slog.String(logging.KeyError, err.Error()))
+		os.Exit(1)
+	}
+
+	if s.vaultEnabled {
+		// Set up the vault client
+		vc, err := vault.NewClient(v.GetString("vault.host"))
+		if err != nil {
+			slog.Error("Error creating vault client", slog.String(logging.KeyError, err.Error()))
+			os.Exit(1)
+		}
+
+		dbSec, err := vc.GetSecrets(v.GetString("vault.db_path"))
+		if err != nil {
+			slog.Error("Error getting database secrets", slog.String(logging.KeyError, err.Error()))
+			os.Exit(1)
+		}
+
+		dbConnStr := dataaccess.GenerateConnectionStr(v, dbSec)
+		v.Set("db.conn_str", dbConnStr)
+	} else {
+		err := v.BindEnv("db.conn_str", dataaccess.EnvDbConnStr)
+		if err != nil {
+			slog.Error("Error binding environment variable", slog.String(logging.KeyError, err.Error()))
+			os.Exit(1)
+		}
+	}
+
+	// Connect to the database
+	db, err := dataaccess.ConnectDatabase(context.Background(), s.dbType, v)
+	if err != nil {
+		slog.Error("Error connecting to database", slog.String(logging.KeyError, err.Error()))
+		os.Exit(1)
+	}
+
 	purgeSvc := purge.NewService(db)
 
 	// Set up the purge routine

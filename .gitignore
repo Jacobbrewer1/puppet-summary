@@ -27,3 +27,5 @@ go.work
 *.db
 *.db-shm
 *.db-wal
+
+***/config.json

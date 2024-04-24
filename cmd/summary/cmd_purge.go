@@ -77,7 +77,7 @@ func (p *purgeCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 		return subcommands.ExitFailure
 	}
 
-	db, err := dataaccess.ConnectDatabase(ctx, p.dbType)
+	db, err := dataaccess.ConnectDatabase(ctx, p.dbType, nil)
 	if err != nil {
 		slog.Error("Error connecting to database", slog.String(logging.KeyError, err.Error()))
 		return subcommands.ExitFailure
