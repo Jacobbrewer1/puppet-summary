@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
@@ -14,6 +13,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/go-sql-driver/mysql"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/viper"
 )
 
 type mysqlImpl struct {
@@ -148,7 +148,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 		}
 
 		// Parse the date.
-		dt, err := time.Parse(time.RFC3339, d)
+		dt, err := time.Parse(time.DateOnly, d)
 		if err != nil {
 			slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
 			continue
@@ -526,13 +526,13 @@ CREATE TABLE IF NOT EXISTS reports
 	return nil
 }
 
-func NewMySQL() (Database, error) {
-	connectionString := os.Getenv(envDbConnStr)
+func NewMySQL(v *viper.Viper) (Database, error) {
+	connectionString := v.GetString("db.conn_str")
 	if connectionString != "" {
 		slog.Debug("Found MySQL URI in environment")
 	} else {
 		// Missing environment variable.
-		return nil, fmt.Errorf("no %s environment variable provided", envDbConnStr)
+		return nil, fmt.Errorf("no %s environment variable provided", EnvDbConnStr)
 	}
 
 	d, err := sql.Open("mysql", connectionString)

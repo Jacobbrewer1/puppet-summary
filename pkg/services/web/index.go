@@ -40,6 +40,7 @@ func (s service) indexHandler(w http.ResponseWriter, r *http.Request) {
 	nodes, err := s.db.GetRuns(r.Context())
 	if err != nil && !errors.Is(err, dataaccess.ErrNotFound) {
 		// Respond with 500 internal server error.
+		slog.Error("Error getting nodes", slog.String(logging.KeyError, err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(request.NewMessage("Error getting nodes")); err != nil {
 			slog.Warn("Error encoding response", slog.String(logging.KeyError, err.Error()))

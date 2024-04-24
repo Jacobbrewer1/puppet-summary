@@ -123,9 +123,9 @@ func (s *mysqlSuite) TestGetHistoryAllEnvs() {
 	s.mockDB.ExpectPrepare(expSql1)
 
 	rows1 := sqlmock.NewRows([]string{"DATE(executed_at)"}).
-		AddRow("2023-02-21T00:00:00Z").
-		AddRow("2023-02-22T00:00:00Z").
-		AddRow("2023-02-23T00:00:00Z")
+		AddRow("2023-02-21").
+		AddRow("2023-02-22").
+		AddRow("2023-02-23")
 
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)
@@ -220,9 +220,9 @@ func (s *mysqlSuite) TestGetHistoryMultipleEnv() {
 	s.mockDB.ExpectPrepare(expSql1)
 
 	rows1 := sqlmock.NewRows([]string{"DATE(executed_at)"}).
-		AddRow("2023-02-21T00:00:00Z").
-		AddRow("2023-02-22T00:00:00Z").
-		AddRow("2023-02-23T00:00:00Z")
+		AddRow("2023-02-21").
+		AddRow("2023-02-22").
+		AddRow("2023-02-23")
 
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)
@@ -317,9 +317,9 @@ func (s *mysqlSuite) TestGetHistorySingleEnv() {
 	s.mockDB.ExpectPrepare(expSql1)
 
 	rows1 := sqlmock.NewRows([]string{"DATE(executed_at)"}).
-		AddRow("2023-02-21T00:00:00Z").
-		AddRow("2023-02-22T00:00:00Z").
-		AddRow("2023-02-23T00:00:00Z")
+		AddRow("2023-02-21").
+		AddRow("2023-02-22").
+		AddRow("2023-02-23")
 
 	s.mockDB.ExpectQuery(expSql1).
 		WillReturnRows(rows1)

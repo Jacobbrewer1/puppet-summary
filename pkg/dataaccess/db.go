@@ -8,9 +8,11 @@ import (
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/vault"
+	"github.com/spf13/viper"
 )
 
-const envDbConnStr = "DB_CONN_STR"
+const EnvDbConnStr = "DB_CONN_STR"
 
 type Database interface {
 	// Ping pings the database.
@@ -44,7 +46,7 @@ type Database interface {
 	Purge(ctx context.Context, from time.Time) (int, error)
 }
 
-func ConnectDatabase(ctx context.Context, dbType string) (Database, error) {
+func ConnectDatabase(ctx context.Context, dbType string, v *viper.Viper) (Database, error) {
 	dbType = strings.TrimSpace(dbType)
 	dbType = strings.ToUpper(dbType)
 
@@ -55,13 +57,13 @@ func ConnectDatabase(ctx context.Context, dbType string) (Database, error) {
 
 	switch opt {
 	case DbMongo:
-		mongo, err := NewMongo(ctx)
+		mongo, err := NewMongo(ctx, v)
 		if err != nil {
 			return nil, fmt.Errorf("connect to mongo: %w", err)
 		}
 		return mongo, nil
 	case DbMySQL:
-		mysql, err := NewMySQL()
+		mysql, err := NewMySQL(v)
 		if err != nil {
 			return nil, fmt.Errorf("connect to mysql: %w", err)
 		}
@@ -75,4 +77,13 @@ func ConnectDatabase(ctx context.Context, dbType string) (Database, error) {
 	default:
 		return nil, fmt.Errorf("invalid database option, %s", dbType)
 	}
+}
+
+func GenerateConnectionStr(v *viper.Viper, vs vault.Secrets) string {
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s",
+		vs["username"],
+		vs["password"],
+		v.GetString("db.host"),
+		v.GetString("db.schema"),
+	)
 }
