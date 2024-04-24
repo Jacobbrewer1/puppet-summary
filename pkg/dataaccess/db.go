@@ -3,13 +3,13 @@ package dataaccess
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/viper"
 	"strings"
 	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/vault"
+	"github.com/spf13/viper"
 )
 
 const EnvDbConnStr = "DB_CONN_STR"
