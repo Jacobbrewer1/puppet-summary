@@ -1,6 +1,8 @@
 module github.com/Jacobbrewer1/puppet-summary
 
-go 1.21
+go 1.22
+
+toolchain go1.22.0
 
 require (
 	cloud.google.com/go/storage v1.40.0
