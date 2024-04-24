@@ -173,6 +173,8 @@ func (s *serveCmd) setup(r *mux.Router) {
 			os.Exit(1)
 		}
 
+		slog.Debug("Database credentials retrieved from vault")
+
 		dbConnStr := dataaccess.GenerateConnectionStr(v, dbSec)
 		v.Set("db.conn_str", dbConnStr)
 	} else {
