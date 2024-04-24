@@ -6,8 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/Jacobbrewer1/puppet-summary/pkg/vault"
-	"github.com/spf13/viper"
 	"log/slog"
 	"net/http"
 	"os"
@@ -21,9 +19,11 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/services/api"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/services/purge"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/services/web"
+	"github.com/Jacobbrewer1/puppet-summary/pkg/vault"
 	"github.com/google/subcommands"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/spf13/viper"
 )
 
 type serveCmd struct {

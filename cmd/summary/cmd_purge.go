@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/spf13/viper"
 	"log/slog"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/services/purge"
 	"github.com/google/subcommands"
+	"github.com/spf13/viper"
 )
 
 type purgeCmd struct {
