@@ -322,6 +322,9 @@ func (s *sqliteImpl) GetReports(ctx context.Context, fqdn string) ([]*entities.P
 			&report.Failed, &report.Changed, &report.Total, &report.YamlFile); err != nil {
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
+
+		report.CalculateTimeSince()
+
 		reports = append(reports, report)
 	}
 

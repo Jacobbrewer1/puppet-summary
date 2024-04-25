@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/stretchr/testify/require"
 	"regexp"
 	"testing"
 	"time"
@@ -497,7 +498,7 @@ func (s *sqliteSuite) TestGetReports() {
 	report, err := s.dbObject.GetReports(ctx, "fqdn")
 	s.Require().NoError(err)
 
-	s.Require().Equal([]*entities.PuppetReportSummary{
+	reps := []*entities.PuppetReportSummary{
 		{
 			ID:       id1,
 			Fqdn:     "fqdn",
@@ -522,7 +523,16 @@ func (s *sqliteSuite) TestGetReports() {
 			Total:    3,
 			YamlFile: "yaml_file1",
 		},
-	}, report)
+	}
+
+	// Ensure that the time since field is set.
+	for i := range report {
+		r := report[i]
+		require.NotEqual(s.T(), 0, r.TimeSince.Time())
+		r.TimeSince = entities.Duration(0)
+	}
+
+	s.Require().Equal(reps, report)
 }
 
 func (s *sqliteSuite) TestGetRunsByStateSingleState() {

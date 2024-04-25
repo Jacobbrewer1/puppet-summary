@@ -148,7 +148,7 @@ func (m *mysqlImpl) GetHistory(ctx context.Context, environment ...summary.Envir
 		}
 
 		// Parse the date.
-		dt, err := time.Parse(time.DateOnly, d)
+		dt, err := time.Parse(time.RFC3339, d)
 		if err != nil {
 			slog.Error("Error parsing date", slog.String(logging.KeyError, err.Error()))
 			continue
@@ -319,6 +319,9 @@ ORDER by executed_at DESC;
 			&report.Failed, &report.Changed, &report.Total, &report.YamlFile); err != nil {
 			return nil, fmt.Errorf("error scanning rows: %w", err)
 		}
+
+		report.CalculateTimeSince()
+
 		reports = append(reports, report)
 	}
 
