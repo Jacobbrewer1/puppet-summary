@@ -3,7 +3,6 @@ package dataaccess
 import (
 	"context"
 	"database/sql"
-	"github.com/stretchr/testify/require"
 	"regexp"
 	"testing"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/go-sql-driver/mysql"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 

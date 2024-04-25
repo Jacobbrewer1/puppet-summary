@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/stretchr/testify/require"
 	"regexp"
 	"testing"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
