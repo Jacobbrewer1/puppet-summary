@@ -88,7 +88,7 @@ func (s *serveCmd) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{
 	}
 
 	r := mux.NewRouter()
-	s.setup(r)
+	s.setup(ctx, r)
 
 	slog.Info(
 		"Starting application",
@@ -151,7 +151,7 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 	return nil
 }
 
-func (s *serveCmd) setup(r *mux.Router) {
+func (s *serveCmd) setup(ctx context.Context, r *mux.Router) {
 	v := viper.New()
 	v.SetConfigFile(s.configLocation)
 	if err := v.ReadInConfig(); err != nil {
@@ -175,7 +175,20 @@ func (s *serveCmd) setup(r *mux.Router) {
 
 		slog.Debug("Database credentials retrieved from vault")
 
-		dbConnStr := dataaccess.GenerateConnectionStr(v, dbSec)
+		go func() {
+			err = vc.RenewLease(ctx, v.GetString("vault.db_path"), dbSec.Secret, func() {
+				slog.Warn("Database credentials lease expired")
+				// Reconnect to the database
+				dbSec, err = vc.GetSecrets(v.GetString("vault.db_path"))
+				if err != nil {
+					slog.Error("Error getting database secrets", slog.String(logging.KeyError, err.Error()))
+				} else {
+					slog.Debug("Database credentials retrieved from vault")
+				}
+			})
+		}()
+
+		dbConnStr := dataaccess.GenerateConnectionStr(v, *dbSec)
 		v.Set("db.conn_str", dbConnStr)
 	} else {
 		err := v.BindEnv("db.conn_str", dataaccess.EnvDbConnStr)
