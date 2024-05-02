@@ -178,13 +178,8 @@ func (s *serveCmd) setup(ctx context.Context, r *mux.Router) {
 		go func() {
 			err = vc.RenewLease(ctx, v.GetString("vault.db_path"), dbSec.Secret, func() {
 				slog.Warn("Database credentials lease expired")
-				// Reconnect to the database
-				dbSec, err = vc.GetSecrets(v.GetString("vault.db_path"))
-				if err != nil {
-					slog.Error("Error getting database secrets", slog.String(logging.KeyError, err.Error()))
-				} else {
-					slog.Debug("Database credentials retrieved from vault")
-				}
+				// Exit the application if the lease expires (this is a simplified example)
+				os.Exit(1) // Forces new credentials to be fetched
 			})
 		}()
 
