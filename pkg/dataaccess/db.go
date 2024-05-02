@@ -81,8 +81,8 @@ func ConnectDatabase(ctx context.Context, dbType string, v *viper.Viper) (Databa
 
 func GenerateConnectionStr(v *viper.Viper, vs vault.Secrets) string {
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=90s&multiStatements=true&parseTime=true",
-		vs["username"],
-		vs["password"],
+		vs.Data["username"],
+		vs.Data["password"],
 		v.GetString("db.host"),
 		v.GetString("db.schema"),
 	)
