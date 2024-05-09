@@ -34,7 +34,7 @@ type client struct {
 
 func NewClient(v *viper.Viper) (Client, error) {
 	config := vault.DefaultConfig()
-	config.Address = v.GetString("vault.address")
+	config.Address = v.GetString("vault.host")
 
 	c, err := vault.NewClient(config)
 	if err != nil {
