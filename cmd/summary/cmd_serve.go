@@ -22,6 +22,7 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/vault"
 	"github.com/google/subcommands"
 	"github.com/gorilla/mux"
+	vault2 "github.com/hashicorp/vault/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 )
@@ -161,7 +162,7 @@ func (s *serveCmd) setup(ctx context.Context, r *mux.Router) {
 
 	if s.vaultEnabled {
 		// Set up the vault client
-		vc, err := vault.NewClient(v.GetString("vault.host"))
+		vc, err := vault.NewClient(v)
 		if err != nil {
 			slog.Error("Error creating vault client", slog.String(logging.KeyError, err.Error()))
 			os.Exit(1)
@@ -176,10 +177,10 @@ func (s *serveCmd) setup(ctx context.Context, r *mux.Router) {
 		slog.Debug("Database credentials retrieved from vault")
 
 		go func() {
-			err = vc.RenewLease(ctx, v.GetString("vault.db_path"), dbSec.Secret, func() {
-				slog.Warn("Database credentials lease expired")
-				// Exit the application if the lease expires (this is a simplified example)
-				os.Exit(1) // Forces new credentials to be fetched
+			err = vc.RenewLease(ctx, v.GetString("vault.db_path"), dbSec.Secret, func() (*vault2.Secret, error) {
+				slog.Warn("Vault lease expired, restarting application")
+				os.Exit(1) // Restart the application to get new secrets
+				return nil, nil
 			})
 		}()
 
