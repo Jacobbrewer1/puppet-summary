@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+type renewalFunc func() (*vault.Secret, error)
+
 type Secrets struct {
 	*vault.Secret
 }
@@ -21,7 +23,7 @@ type Client interface {
 	GetSecrets(path string) (*Secrets, error)
 
 	// RenewLease renews the lease of the given credentials.
-	RenewLease(ctx context.Context, name string, credentials *vault.Secret, onExpire func()) error
+	RenewLease(ctx context.Context, name string, credentials *vault.Secret, renewFunc renewalFunc) error
 }
 
 type client struct {
@@ -30,9 +32,9 @@ type client struct {
 	vip      *viper.Viper
 }
 
-func NewClient(vaultAddr string) (Client, error) {
+func NewClient(v *viper.Viper) (Client, error) {
 	config := vault.DefaultConfig()
-	config.Address = vaultAddr
+	config.Address = v.GetString("vault.host")
 
 	c, err := vault.NewClient(config)
 	if err != nil {
@@ -41,7 +43,7 @@ func NewClient(vaultAddr string) (Client, error) {
 
 	clientImpl := &client{
 		v:   c,
-		vip: viper.New(),
+		vip: v,
 	}
 
 	authInfo, err := clientImpl.login()
@@ -58,23 +60,13 @@ func NewClient(vaultAddr string) (Client, error) {
 
 func (c *client) login() (*vault.Secret, error) {
 	vip := c.vip
-	err := vip.BindEnv("vault.approle_id", "VAULT_APPROLE_ID")
-	if err != nil {
-		return nil, fmt.Errorf("unable to bind environment variable: %w", err)
-	}
-
-	err = vip.BindEnv("vault.approle_secret_id", "VAULT_APPROLE_SECRET_ID")
-	if err != nil {
-		return nil, fmt.Errorf("unable to bind environment variable: %w", err)
-	}
-
 	approleSecretID := &approle.SecretID{
-		FromString: vip.GetString("vault.approle_secret_id"),
+		FromString: vip.GetString("vault.app_role_secret_id"),
 	}
 
 	// Authenticate with Vault with the AppRole auth method
 	appRoleAuth, err := approle.NewAppRoleAuth(
-		vip.GetString("vault.approle_id"),
+		vip.GetString("vault.app_role_id"),
 		approleSecretID,
 	)
 	if err != nil {
@@ -110,17 +102,24 @@ func (c *client) renewAuthInfo() {
 		os.Exit(1) // Kill the app to get new credentials
 	}
 
-	onExpire := func() {
+	onExpire := func() (*vault.Secret, error) {
 		authInfo, err := c.login()
 		if err != nil {
-			slog.Error("unable to login to Vault", slog.String("error", err.Error()))
+			return nil, fmt.Errorf("unable to login to Vault: %w", err)
+		}
+
+		return authInfo, nil
+	}
+
+	err = c.handleWatcherResult(res, func() {
+		newAuthInfo, err := onExpire()
+		if err != nil {
+			slog.Error("unable to handle watcher result", slog.String("error", err.Error()))
 			os.Exit(1) // Kill the app to get new credentials
 		}
 
-		c.authInfo = authInfo
-	}
-
-	err = c.handleWatcherResult(res, onExpire)
+		c.authInfo = newAuthInfo
+	})
 	if err != nil {
 		slog.Error("unable to handle watcher result", slog.String("error", err.Error()))
 		os.Exit(1) // Kill the app to get new credentials
@@ -164,7 +163,7 @@ func (c *client) monitorWatcher(ctx context.Context, name string, watcher *vault
 		// renewal takes place and includes metadata about the renewal.
 		case info := <-watcher.RenewCh():
 			slog.Info("renewal successful", slog.String("renewed_at", info.RenewedAt.String()),
-				slog.String("secret", name))
+				slog.String("secret", name), slog.String("lease_duration", fmt.Sprintf("%ds", info.Secret.LeaseDuration)))
 		}
 	}
 }
@@ -192,12 +191,40 @@ func (c *client) GetSecrets(path string) (*Secrets, error) {
 // this which are outside the scope of this code sample.
 //
 // ref: https://www.vaultproject.io/docs/enterprise/consistency#vault-1-7-mitigations
-func (c *client) RenewLease(ctx context.Context, name string, credentials *vault.Secret, onExpire func()) error {
+func (c *client) RenewLease(ctx context.Context, name string, credentials *vault.Secret, renewFunc renewalFunc) error {
+	slog.Info("renewing lease", slog.String("secret", name))
+
+	currentCreds := credentials
+
+	for {
+		res, err := c.leaseRenew(ctx, name, currentCreds)
+		if err != nil {
+			return fmt.Errorf("unable to renew lease: %w", err)
+		}
+
+		err = c.handleWatcherResult(res, func() {
+			newCreds, err := renewFunc()
+			if err != nil {
+				slog.Error("unable to renew credentials", slog.String("error", err.Error()))
+				os.Exit(1) // Forces new credentials to be fetched
+			}
+
+			currentCreds = newCreds
+		})
+		if err != nil {
+			return fmt.Errorf("unable to handle watcher result: %w", err)
+		}
+
+		slog.Info("lease renewed", slog.String("secret", name))
+	}
+}
+
+func (c *client) leaseRenew(ctx context.Context, name string, credentials *vault.Secret) (renewResult, error) {
 	credentialsWatcher, err := c.v.NewLifetimeWatcher(&vault.LifetimeWatcherInput{
 		Secret: credentials,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to initialize credentials lifetime watcher: %w", err)
+		return renewError, fmt.Errorf("unable to initialize credentials lifetime watcher: %w", err)
 	}
 
 	go credentialsWatcher.Start()
@@ -205,13 +232,8 @@ func (c *client) RenewLease(ctx context.Context, name string, credentials *vault
 
 	res, err := c.monitorWatcher(ctx, name, credentialsWatcher)
 	if err != nil {
-		return fmt.Errorf("unable to monitor watcher: %w", err)
+		return renewError, fmt.Errorf("unable to monitor watcher: %w", err)
 	}
 
-	err = c.handleWatcherResult(res, onExpire)
-	if err != nil {
-		return fmt.Errorf("unable to handle watcher result: %w", err)
-	}
-
-	return nil
+	return res, nil
 }
