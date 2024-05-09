@@ -85,44 +85,19 @@ func (c *client) login() (*vault.Secret, error) {
 }
 
 func (c *client) renewAuthInfo() {
-	authTokenWatcher, err := c.v.NewLifetimeWatcher(&vault.LifetimeWatcherInput{
-		Secret: c.authInfo,
-	})
-	if err != nil {
-		slog.Error("unable to initialize auth token lifetime watcher", slog.String("error", err.Error()))
-		os.Exit(1) // Kill the app to get new credentials
-	}
-
-	go authTokenWatcher.Start()
-	defer authTokenWatcher.Stop()
-
-	res, err := c.monitorWatcher(context.Background(), "authInfo", authTokenWatcher)
-	if err != nil {
-		slog.Error("unable to monitor watcher", slog.String("error", err.Error()))
-		os.Exit(1) // Kill the app to get new credentials
-	}
-
-	onExpire := func() (*vault.Secret, error) {
+	err := c.RenewLease(context.Background(), "auth", c.authInfo, func() (*vault.Secret, error) {
 		authInfo, err := c.login()
 		if err != nil {
-			return nil, fmt.Errorf("unable to login to Vault: %w", err)
+			return nil, fmt.Errorf("unable to renew auth info: %w", err)
 		}
+
+		c.authInfo = authInfo
 
 		return authInfo, nil
-	}
-
-	err = c.handleWatcherResult(res, func() {
-		newAuthInfo, err := onExpire()
-		if err != nil {
-			slog.Error("unable to handle watcher result", slog.String("error", err.Error()))
-			os.Exit(1) // Kill the app to get new credentials
-		}
-
-		c.authInfo = newAuthInfo
 	})
 	if err != nil {
-		slog.Error("unable to handle watcher result", slog.String("error", err.Error()))
-		os.Exit(1) // Kill the app to get new credentials
+		slog.Error("unable to renew auth info", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 }
 
@@ -163,7 +138,7 @@ func (c *client) monitorWatcher(ctx context.Context, name string, watcher *vault
 		// renewal takes place and includes metadata about the renewal.
 		case info := <-watcher.RenewCh():
 			slog.Info("renewal successful", slog.String("renewed_at", info.RenewedAt.String()),
-				slog.String("secret", name), slog.String("lease_duration", fmt.Sprintf("%ds", info.Secret.LeaseDuration)))
+				slog.String("secret", name))
 		}
 	}
 }
