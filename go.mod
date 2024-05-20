@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/vault/api/auth/approle v0.6.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/smallfish/simpleyaml v0.1.0
 	github.com/spf13/viper v1.18.2
