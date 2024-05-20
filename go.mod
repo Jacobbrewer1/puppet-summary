@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.0
 
 require (
-	cloud.google.com/go/storage v1.40.0
+	cloud.google.com/go/storage v1.41.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/alexliesenfeld/health v0.8.0
 	github.com/go-sql-driver/mysql v1.8.1
@@ -30,7 +30,7 @@ require (
 	cloud.google.com/go/auth v0.4.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
-	cloud.google.com/go/iam v1.1.7 // indirect
+	cloud.google.com/go/iam v1.1.8 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
