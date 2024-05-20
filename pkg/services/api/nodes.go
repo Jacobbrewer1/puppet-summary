@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/dataaccess"
@@ -56,6 +57,21 @@ func (s service) GetAllNodes(w http.ResponseWriter, r *http.Request) {
 			State:    &node.State,
 		})
 	}
+
+	// Sort the nodes by the time they were executed.
+	sort.Slice(mappedNodes, func(i, j int) bool {
+		iTime, err := time.Parse(time.RFC3339, *mappedNodes[i].ExecTime)
+		if err != nil {
+			return false
+		}
+
+		jTime, err := time.Parse(time.RFC3339, *mappedNodes[j].ExecTime)
+		if err != nil {
+			return false
+		}
+
+		return iTime.Before(jTime)
+	})
 
 	nodesResponse := new(summary.NodesResponse)
 	nodesResponse.Nodes = &mappedNodes
