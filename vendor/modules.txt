@@ -177,6 +177,13 @@ github.com/hashicorp/vault/api
 # github.com/hashicorp/vault/api/auth/approle v0.7.0
 ## explicit; go 1.21
 github.com/hashicorp/vault/api/auth/approle
+# github.com/hashicorp/vault/api/auth/userpass v0.7.0
+## explicit; go 1.21
+github.com/hashicorp/vault/api/auth/userpass
+# github.com/jmoiron/sqlx v1.4.0
+## explicit; go 1.10
+github.com/jmoiron/sqlx
+github.com/jmoiron/sqlx/reflectx
 # github.com/klauspost/compress v1.17.2
 ## explicit; go 1.18
 github.com/klauspost/compress
