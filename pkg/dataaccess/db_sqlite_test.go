@@ -11,6 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -39,9 +40,12 @@ func (s *sqliteSuite) SetupTest() {
 	s.db = db
 	s.mockDB = mock
 
+	newDb := sqlx.NewDb(s.db, "mysql")
+	customDb := NewDb(newDb)
+
 	// Create a new database object.
 	s.dbObject = &sqliteImpl{
-		client: db,
+		client: customDb,
 	}
 }
 
