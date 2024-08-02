@@ -155,34 +155,29 @@ func (s *serveCmd) generateConfig(ctx context.Context) error {
 func (s *serveCmd) setup(ctx context.Context, r *mux.Router) {
 	v := viper.New()
 	v.SetConfigFile(s.configLocation)
-	if err := v.ReadInConfig(); err != nil {
+	err := v.ReadInConfig()
+	if err != nil {
 		slog.Error("Error reading config file", slog.String(logging.KeyError, err.Error()))
 		os.Exit(1)
 	}
 
+	var vc vault.Client
+	dbSec := new(vault.Secrets)
 	if s.vaultEnabled {
 		// Set up the vault client
-		vc, err := vault.NewClient(v)
+		vc, err = vault.NewClientUserPass(v)
 		if err != nil {
 			slog.Error("Error creating vault client", slog.String(logging.KeyError, err.Error()))
 			os.Exit(1)
 		}
 
-		dbSec, err := vc.GetSecrets(v.GetString("vault.db_path"))
+		dbSec, err = vc.GetSecrets(v.GetString("database.credentials_path"))
 		if err != nil {
 			slog.Error("Error getting database secrets", slog.String(logging.KeyError, err.Error()))
 			os.Exit(1)
 		}
 
 		slog.Debug("Database credentials retrieved from vault")
-
-		go func() {
-			err = vc.RenewLease(ctx, v.GetString("vault.db_path"), dbSec.Secret, func() (*vault2.Secret, error) {
-				slog.Warn("Vault lease expired, restarting application")
-				os.Exit(1) // Restart the application to get new secrets
-				return nil, nil
-			})
-		}()
 
 		dbConnStr := dataaccess.GenerateConnectionStr(v, *dbSec)
 		v.Set("db.conn_str", dbConnStr)
@@ -199,6 +194,34 @@ func (s *serveCmd) setup(ctx context.Context, r *mux.Router) {
 	if err != nil {
 		slog.Error("Error connecting to database", slog.String(logging.KeyError, err.Error()))
 		os.Exit(1)
+	}
+
+	if s.vaultEnabled {
+		go func() {
+			err = vc.RenewLease(ctx, v.GetString("database.credentials_path"), dbSec.Secret, func() (*vault2.Secret, error) {
+				slog.Warn("Vault lease expired, reconnecting to database")
+
+				vs, err := vc.GetSecrets(v.GetString("database.credentials_path"))
+				if err != nil {
+					return nil, fmt.Errorf("error getting secrets from vault: %w", err)
+				}
+
+				dbConnectionString := dataaccess.GenerateConnectionStr(v, *vs)
+				v.Set("database.connection_string", dbConnectionString)
+
+				if err := db.Reconnect(ctx, dbConnectionString); err != nil {
+					return nil, fmt.Errorf("error reconnecting to database: %w", err)
+				}
+
+				slog.Info("Database reconnected")
+
+				return vs.Secret, nil
+			})
+			if err != nil {
+				slog.Error("Error renewing vault lease", slog.String(logging.KeyError, err.Error()))
+				os.Exit(1) // Forces new credentials to be fetched
+			}
+		}()
 	}
 
 	purgeSvc := purge.NewService(db)

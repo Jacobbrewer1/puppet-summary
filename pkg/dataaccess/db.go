@@ -3,12 +3,15 @@ package dataaccess
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/vault"
+	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 )
 
@@ -20,6 +23,9 @@ type Database interface {
 
 	// Close closes the database connection.
 	Close(ctx context.Context) error
+
+	// Reconnect will be called periodically to refresh the database connection
+	Reconnect(ctx context.Context, connStr string) error
 
 	// SaveRun saves a PuppetRun to the database.
 	SaveRun(ctx context.Context, run *entities.PuppetReport) error
@@ -83,7 +89,88 @@ func GenerateConnectionStr(v *viper.Viper, vs vault.Secrets) string {
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=90s&multiStatements=true&parseTime=true",
 		vs.Data["username"],
 		vs.Data["password"],
-		v.GetString("db.host"),
-		v.GetString("db.schema"),
+		v.GetString("database.host"),
+		v.GetString("database.schema"),
 	)
+}
+
+type Db struct {
+	*sqlx.DB
+	*sync.RWMutex
+}
+
+// NewDb establishes a database connection with the given Vault credentials
+func NewDb(db *sqlx.DB) *Db {
+	return &Db{
+		DB:      db,
+		RWMutex: new(sync.RWMutex),
+	}
+}
+
+// Reconnect will be called periodically to refresh the database connection
+// since the dynamic credentials expire after some time, it will:
+//  1. construct a connection string using the given credentials
+//  2. establish a database connection
+//  3. close & replace the existing connection with the new one behind a mutex
+func (d *Db) Reconnect(ctx context.Context, db *sqlx.DB) error {
+	ctx, cancelContextFunc := context.WithTimeout(ctx, 7*time.Second)
+	defer cancelContextFunc()
+
+	slog.Debug("Reconnecting to database")
+
+	// wait until the database is ready or timeout expires
+	for {
+		err := db.PingContext(ctx)
+		if err == nil {
+			break
+		}
+		select {
+		case <-time.After(500 * time.Millisecond):
+			slog.Debug("Database ping failed, retrying...")
+			continue
+		case <-ctx.Done():
+			return fmt.Errorf("failed to successfully ping database before context timeout: %w", err)
+		}
+	}
+
+	slog.Info("New database connection established")
+
+	d.closeReplaceConnection(db)
+
+	return nil
+}
+
+func (d *Db) closeReplaceConnection(newDb *sqlx.DB) {
+	slog.Debug("Replacing database connection")
+
+	// close the existing connection, if exists
+	if d.DB != nil {
+		_ = d.Close()
+	}
+
+	d.DB = newDb
+
+	slog.Debug("Database connection replaced")
+}
+
+func (d *Db) Close() error {
+	slog.Debug("Acquiring lock to close database connection")
+
+	d.Lock()
+	defer d.Unlock()
+
+	slog.Debug("Lock acquired to close database connection")
+
+	if d.DB != nil {
+		return d.DB.Close()
+	}
+
+	return nil
+}
+
+func (d *Db) PingContext(ctx context.Context) error {
+	d.RLock()
+	defer d.RUnlock()
+
+	return d.DB.PingContext(ctx)
 }

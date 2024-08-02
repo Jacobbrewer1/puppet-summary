@@ -12,13 +12,28 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type sqliteImpl struct {
 	// client is the database.
-	client *sql.DB
+	client *Db
+}
+
+func (s *sqliteImpl) Reconnect(ctx context.Context, connStr string) error {
+	dbLite, err := sqlx.Open("sqlite3", connStr)
+	if err != nil {
+		return fmt.Errorf("error opening database: %w", err)
+	}
+
+	err = s.client.Reconnect(ctx, dbLite)
+	if err != nil {
+		return fmt.Errorf("error reconnecting: %w", err)
+	}
+
+	return nil
 }
 
 func (s *sqliteImpl) Close(_ context.Context) error {
@@ -527,13 +542,15 @@ func (s *sqliteImpl) setup() error {
 }
 
 func NewSQLite() (Database, error) {
-	dbLite, err := sql.Open("sqlite3", "file:puppet-summary.db?_journal_mode=WAL")
+	dbLite, err := sqlx.Open("sqlite3", "file:puppet-summary.db?_journal_mode=WAL")
 	if err != nil {
 		return nil, fmt.Errorf("error opening database: %w", err)
 	}
 
+	newDb := NewDb(dbLite)
+
 	impl := &sqliteImpl{
-		client: dbLite,
+		client: newDb,
 	}
 
 	if err := impl.setup(); err != nil {

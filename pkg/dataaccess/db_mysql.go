@@ -12,13 +12,29 @@ import (
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
 )
 
 type mysqlImpl struct {
 	// client is the database.
-	client *sql.DB
+	client *Db
+}
+
+func (m *mysqlImpl) Reconnect(ctx context.Context, connStr string) error {
+	// Create a new database connection.
+	newDb, err := sqlx.Open("mysql", connStr)
+	if err != nil {
+		return fmt.Errorf("error opening mysql: %w", err)
+	}
+
+	err = m.client.Reconnect(ctx, newDb)
+	if err != nil {
+		return fmt.Errorf("error reconnecting: %w", err)
+	}
+
+	return nil
 }
 
 func (m *mysqlImpl) Close(_ context.Context) error {
@@ -538,13 +554,15 @@ func NewMySQL(v *viper.Viper) (Database, error) {
 		return nil, fmt.Errorf("no %s environment variable provided", EnvDbConnStr)
 	}
 
-	d, err := sql.Open("mysql", connectionString)
+	d, err := sqlx.Open("mysql", connectionString)
 	if err != nil {
 		return nil, fmt.Errorf("error opening mysql: %w", err)
 	}
 
+	newDb := NewDb(d)
+
 	impl := &mysqlImpl{
-		client: d,
+		client: newDb,
 	}
 
 	if err := impl.setup(); err != nil {

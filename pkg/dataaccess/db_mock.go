@@ -18,6 +18,11 @@ func (m *MockDb) Ping(ctx context.Context) error {
 	return args.Error(0)
 }
 
+func (m *MockDb) Reconnect(ctx context.Context, connStr string) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
 func (m *MockDb) Close(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)

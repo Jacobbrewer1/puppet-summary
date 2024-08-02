@@ -8,14 +8,15 @@ import (
 	"sort"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"github.com/Jacobbrewer1/puppet-summary/pkg/codegen/apis/summary"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/entities"
 	"github.com/Jacobbrewer1/puppet-summary/pkg/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const mongoDatabase = "puppet-summary"
@@ -23,6 +24,29 @@ const mongoDatabase = "puppet-summary"
 type mongodbImpl struct {
 	// client is the database.
 	client *mongo.Client
+}
+
+func (m *mongodbImpl) Reconnect(ctx context.Context, connStr string) error {
+	if m.client != nil {
+		if err := m.client.Disconnect(ctx); err != nil {
+			return fmt.Errorf("error disconnecting from database: %w", err)
+		}
+	}
+
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	opts := options.Client().ApplyURI(connStr).SetServerAPIOptions(serverAPI)
+	opts.SetAppName(mongoDatabase)
+
+	client, err := mongo.Connect(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("connect to MongoDB: %w", err)
+	} else if client == nil {
+		return errors.New("nil MongoDB client")
+	}
+
+	m.client = client
+
+	return nil
 }
 
 func (m *mongodbImpl) Close(ctx context.Context) error {
