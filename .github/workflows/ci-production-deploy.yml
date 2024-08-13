@@ -29,13 +29,25 @@ jobs:
         id: get_commit
         run: echo "sha_short_deploy=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_OUTPUT
 
+      - name: Get GitHubAPI token
+        id: get_token
+        uses: Jacobbrewer1/secret-shipper@v0.1.0
+        with:
+          vault-address: ${{ secrets.VAULT_HOST }}
+          vault-user: ${{ secrets.VAULT_USER }}
+          vault-password: ${{ secrets.VAULT_PASSWORD }}
+          action: get
+          mount: ${{ secrets.VAULT_KVV2_MOUNT }}
+          name: ${{ secrets.VAULT_GITHUB_API_NAME }}
+          key: ${{ secrets.VAULT_GITHUB_API_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: main
           repository: Jacobbrewer1/supporting-charts
           path: ./charts
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ steps.get_token.outputs.retrieved-secret }}
 
       - name: Deploy Puppet Summary
         uses: WyriHaximus/github-action-helm3@v4
