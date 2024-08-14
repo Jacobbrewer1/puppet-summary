@@ -38,7 +38,7 @@ jobs:
           username: ${{ secrets.VAULT_USER }}
           password: ${{ secrets.VAULT_PASSWORD }}
           secrets: |
-            ${{ secrets.VAULT_GITHUB_PATH }} | GITHUB_TOKEN ;
+            ${{ secrets.VAULT_GITHUB_PATH }} token | GITHUB_TOKEN ;
 
       - name: Checkout repository
         uses: actions/checkout@v4
