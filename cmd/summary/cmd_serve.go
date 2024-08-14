@@ -171,7 +171,7 @@ func (s *serveCmd) setup(ctx context.Context, r *mux.Router) {
 			os.Exit(1)
 		}
 
-		dbSec, err = vc.GetSecrets(v.GetString("database.credentials_path"))
+		dbSec, err = vc.GetSecrets(v.GetString("vault.database.path"))
 		if err != nil {
 			slog.Error("Error getting database secrets", slog.String(logging.KeyError, err.Error()))
 			os.Exit(1)
@@ -201,7 +201,7 @@ func (s *serveCmd) setup(ctx context.Context, r *mux.Router) {
 			err = vc.RenewLease(ctx, v.GetString("database.credentials_path"), dbSec.Secret, func() (*vault2.Secret, error) {
 				slog.Warn("Vault lease expired, reconnecting to database")
 
-				vs, err := vc.GetSecrets(v.GetString("database.credentials_path"))
+				vs, err := vc.GetSecrets(v.GetString("vault.database.path"))
 				if err != nil {
 					return nil, fmt.Errorf("error getting secrets from vault: %w", err)
 				}
