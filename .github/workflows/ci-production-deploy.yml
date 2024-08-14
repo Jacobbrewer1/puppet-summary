@@ -39,6 +39,7 @@ jobs:
           password: ${{ secrets.VAULT_PASSWORD }}
           secrets: |
             ${{ secrets.VAULT_GITHUB_PATH }} ${{ secrets.VAULT_GITHUB_KEY }} | GITHUB_TOKEN ;
+            ${{ secrets.VAULT_KUBE_CONFIG_PATH }} ${{ secrets.VAULT_KUBE_CONFIG_KEY }} | KUBE_CONFIG ;
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -52,4 +53,4 @@ jobs:
         uses: WyriHaximus/github-action-helm3@v4
         with:
           exec: helm upgrade --install puppet-summary ./charts --values charts/valueFiles/prod-1/puppet-summary.yaml --set image.tag=${{ steps.get_commit.outputs.sha_short_deploy }}
-          kubeconfig: '${{ secrets.KUBE_CONFIG }}'
+          kubeconfig: '${{ steps.import-secrets.outputs.KUBE_CONFIG }}'
