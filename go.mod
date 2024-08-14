@@ -2,6 +2,8 @@ module github.com/Jacobbrewer1/puppet-summary
 
 go 1.22
 
+toolchain go1.22.0
+
 require (
 	cloud.google.com/go/storage v1.43.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
