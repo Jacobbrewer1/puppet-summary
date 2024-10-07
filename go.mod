@@ -14,7 +14,7 @@ require (
 	github.com/hashicorp/vault/api v1.14.0
 	github.com/hashicorp/vault/api/auth/userpass v0.7.0
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/prometheus/client_golang v1.20.2
 	github.com/robfig/cron/v3 v3.0.1
