@@ -12,7 +12,7 @@ require (
 	github.com/google/subcommands v1.2.0
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/vault/api v1.15.0
-	github.com/hashicorp/vault/api/auth/userpass v0.7.0
+	github.com/hashicorp/vault/api/auth/userpass v0.8.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/oapi-codegen/runtime v1.1.1
