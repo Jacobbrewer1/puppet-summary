@@ -22,7 +22,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.17.2
-	golang.org/x/time v0.6.0
+	golang.org/x/time v0.9.0
 	google.golang.org/api v0.199.0
 )
 
