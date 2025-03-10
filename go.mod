@@ -1,8 +1,7 @@
 module github.com/Jacobbrewer1/puppet-summary
 
 go 1.22
-
-toolchain go1.22.0
+toolchain go1.23.7
 
 require (
 	cloud.google.com/go/storage v1.43.0
@@ -22,7 +21,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.17.2
-	golang.org/x/time v0.6.0
+	golang.org/x/time v0.11.0
 	google.golang.org/api v0.199.0
 )
 
